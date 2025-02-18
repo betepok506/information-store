@@ -12,7 +12,6 @@ from backend.app.schemas.response_schema import (
     IPostResponseBase,
     create_response,
 )
-
 from backend.app.schemas.source_schema import ISourceCreate, ISourceRead, ISourceUpdate
 from backend.app.utils.exceptions import (
     ContentNoChangeException,
@@ -87,10 +86,7 @@ async def update_source(
     if not current_source:
         raise IdNotFoundException(Source, id=source_id)
 
-    if (
-        current_source.name == new_source.name
-        and current_source.url == new_source.url
-    ):
+    if current_source.name == new_source.name and current_source.url == new_source.url:
         raise ContentNoChangeException(detail="The content has not changed")
     # TODO: Проверить условия обновления элемента
     exist_source = await crud.source.get_source_by_name(name=new_source.name)

@@ -1,12 +1,15 @@
 # from backend.app.models.group_model import Group
 # from backend.app.models.user_model import User
-from backend.app.models.text_data_model import TextData
-# from backend.app.schemas.group_schema import IGroupCreate, IGroupUpdate
-from backend.app.schemas.text_data_schema import ITextDataCreate, ITextDataUpdate
-from backend.app.crud.base_crud import CRUDBase
 from sqlmodel import select
+
 # from uuid import UUID
 from sqlmodel.ext.asyncio.session import AsyncSession
+
+from backend.app.crud.base_crud import CRUDBase
+from backend.app.models.text_data_model import TextData
+
+# from backend.app.schemas.group_schema import IGroupCreate, IGroupUpdate
+from backend.app.schemas.text_data_schema import ITextDataCreate, ITextDataUpdate
 
 
 class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):

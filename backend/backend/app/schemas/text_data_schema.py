@@ -1,7 +1,8 @@
-from backend.app.models.text_data_model import TextDataBase
-from backend.app.models.processed_urls_model import ProcessedUrlsBase
-from backend.app.utils.partial import optional
 from uuid import UUID
+
+from backend.app.models.processed_urls_model import ProcessedUrlsBase
+from backend.app.models.text_data_model import TextDataBase
+from backend.app.utils.partial import optional
 
 # from .user_schema import IUserReadWithoutGroups
 

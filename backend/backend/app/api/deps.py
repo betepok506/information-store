@@ -4,6 +4,7 @@ import redis.asyncio as aioredis
 
 # from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from prometheus_client import Counter, Histogram
 
 # from jwt import DecodeError, ExpiredSignatureError, MissingRequiredClaimError
 from redis.asyncio import Redis
@@ -23,10 +24,11 @@ from backend.app.db.session import SessionLocal, SessionLocalCelery
 # from backend.app.utils.minio_client import MinioClient
 # from backend.app.utils.token import get_valid_tokens
 
-from prometheus_client import Counter, Histogram
 
-request_count = Counter('http_requests_total', 'Total number of requests')
-request_latency = Histogram('http_request_duration_seconds', 'Request latency in seconds')
+request_count = Counter("http_requests_total", "Total number of requests")
+request_latency = Histogram(
+    "http_request_duration_seconds", "Request latency in seconds"
+)
 http_404_counter = Counter("http_404_errors_total", "Total number of 404 errors")
 http_502_counter = Counter("http_502_errors_total", "Total number of 502 errors")
 http_500_counter = Counter("http_500_errors_total", "Total number of 500 errors")

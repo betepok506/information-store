@@ -1,35 +1,34 @@
-from uuid import UUID
 from typing import List
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from fastapi_pagination import Params
+
 from backend.app import crud
 from backend.app.api import deps
+from backend.app.models.processed_urls_model import ProcessedUrls
+from backend.app.models.source_model import Source
 
 # from backend.app.deps import group_deps, user_deps
 from backend.app.models.text_data_model import TextData
-from backend.app.models.source_model import Source
-from backend.app.models.processed_urls_model import ProcessedUrls
-from backend.app.schemas.text_data_schema import (
-    ITextDataCreate,
-    ITextDataRead,
-    ITextDataRequest,
-    ITextDataUpdateRequest,
-    # IListTextDataCreate,
-    # IGroupReadWithUsers,
-    ITextDataUpdate,
-)
-from backend.app.utils.hash import get_hash
 from backend.app.schemas.processed_urls_schema import (
     IProcessedUrlsCreate,
     IProcessedUrlsUpdate,
 )
 from backend.app.schemas.response_schema import (
-    IGetResponseBase,
     IDeleteResponseBase,
+    IGetResponseBase,
     IGetResponsePaginated,
     IPostResponseBase,
     IPutResponseBase,
     create_response,
+)
+from backend.app.schemas.text_data_schema import (  # IListTextDataCreate,; IGroupReadWithUsers,
+    ITextDataCreate,
+    ITextDataRead,
+    ITextDataRequest,
+    ITextDataUpdate,
+    ITextDataUpdateRequest,
 )
 
 # from backend.app.schemas.role_schema import IRoleEnum
@@ -38,6 +37,7 @@ from backend.app.utils.exceptions import (
     NameExistException,
     NameNotFoundException,
 )
+from backend.app.utils.hash import get_hash
 
 router = APIRouter()
 
@@ -225,7 +225,7 @@ async def remove_text_data(
     current_text_data = await crud.text_data.get(id=text_data_id)
     if not current_text_data:
         raise IdNotFoundException(TextData, id=text_data_id)
-    
+
     team = await crud.text_data.remove(id=text_data_id)
     return create_response(data=team)
 

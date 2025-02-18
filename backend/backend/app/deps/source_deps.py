@@ -10,7 +10,6 @@ from backend.app.utils.exceptions.common_exception import (
     NameNotFoundException,
 )
 
-
 # async def get_group_by_name(
 #     group_name: Annotated[
 #         str, Query(description="String compare with name or last name")
