@@ -1,0 +1,31 @@
+from uuid import UUID
+
+from fastapi import Path, Query
+from typing_extensions import Annotated
+
+from backend.app import crud
+from backend.app.models.source_model import Source
+from backend.app.utils.exceptions.common_exception import (
+    IdNotFoundException,
+    NameNotFoundException,
+)
+
+
+# async def get_group_by_name(
+#     group_name: Annotated[
+#         str, Query(description="String compare with name or last name")
+#     ] = ""
+# ) -> str:
+#     group = await crud.group.get_group_by_name(name=group_name)
+#     if not group:
+#         raise NameNotFoundException(Group, name=group_name)
+#     return group
+
+
+async def get_source_by_id(
+    source_id: Annotated[UUID, Path(description="The UUID id of the source")]
+) -> Source:
+    source = await crud.source.get(id=source_id)
+    if not source:
+        raise IdNotFoundException(Source, id=source_id)
+    return source
