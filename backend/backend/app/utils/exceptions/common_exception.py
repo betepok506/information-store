@@ -81,3 +81,24 @@ class NameExistException(HTTPException, Generic[ModelType]):
             detail=f"The {model.__name__} name already exists.",
             headers=headers,
         )
+
+class UrlValidationError(HTTPException, Generic[ModelType]):
+    def __init__(
+        self,
+        model: Type[ModelType],
+        name: Optional[str] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if name:
+            super().__init__(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"The transmitted URL is not the source address.",
+                headers=headers,
+            )
+            return
+
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"The transmitted URL is not the source address.",
+            headers=headers,
+        )

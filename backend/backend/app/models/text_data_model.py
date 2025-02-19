@@ -12,12 +12,14 @@ class TextDataBase(SQLModel):
 
 
 class TextData(BaseUUIDModel, TextDataBase, table=True):
-    processed_urls_by_id: UUID | None = Field(
-        default=None, foreign_key="ProcessedUrls.id"
+    processed_urls_id: UUID | None = Field(
+        default=None, foreign_key="ProcessedUrls.id", ondelete='SET NULL'
     )
-    processed_urls_by: ProcessedUrls | None = Relationship(  # noqa: F821
+    processed_urls: ProcessedUrls | None = Relationship(  # noqa: F821
         sa_relationship_kwargs={
             "lazy": "joined",
-            "primaryjoin": "TextData.processed_urls_by_id==ProcessedUrls.id",
-        }
+            "primaryjoin": "TextData.processed_urls_id==ProcessedUrls.id",
+            'cascade': 'delete'
+        },
+        back_populates="text_data",
     )

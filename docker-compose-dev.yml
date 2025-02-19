@@ -38,76 +38,76 @@ services:
     #   # - POSTGRESQL_PASSWORD=postgres
     #   - POSTGRESQL_DATABASE=${DATABASE_NAME}
 
-  redis_server:
-    image: redis:alpine
-    container_name: ${PROJECT_NAME}_redis_server    
-    restart: always
-    expose:
-      - 6379
-    env_file: .env
+  # redis_server:
+  #   image: redis:alpine
+  #   container_name: ${PROJECT_NAME}_redis_server    
+  #   restart: always
+  #   expose:
+  #     - 6379
+  #   env_file: .env
 
-  celery_worker:
-    container_name: ${PROJECT_NAME}_celery_worker
-    restart: always
-    # platform: linux/arm64/v8
-    build:
-      context: .
-      dockerfile: ./backend/Dockerfile
-    command: "watchfiles 'celery -A backend.app.core.celery worker -l info' "
-    volumes:
-      - ./backend:/code
-      # - "${EB_LOG_BASE_DIR}/php-app:/var/log/celery"
-    depends_on:
-      - database
-      - redis_server
-    env_file: .env
+  # celery_worker:
+  #   container_name: ${PROJECT_NAME}_celery_worker
+  #   restart: always
+  #   # platform: linux/arm64/v8
+  #   build:
+  #     context: .
+  #     dockerfile: ./backend/Dockerfile
+  #   command: "watchfiles 'celery -A backend.app.core.celery worker -l info' "
+  #   volumes:
+  #     - ./backend:/code
+  #     # - "${EB_LOG_BASE_DIR}/php-app:/var/log/celery"
+  #   depends_on:
+  #     - database
+  #     - redis_server
+  #   env_file: .env
   
-  celery_beat:  #Good for crontab and schedule tasks
-    container_name: ${PROJECT_NAME}_celery_beat
-    restart: always
-    # platform: linux/arm64/v8
-    build:
-      context: .
-      dockerfile: ./backend/Dockerfile
-      # args:
-      #   INSTALL_DEV: ${INSTALL_DEV-false}
-    command: celery -A backend.app.core.celery beat -l info -S celery_sqlalchemy_scheduler.schedulers:DatabaseScheduler -l info
-    volumes:
-      - ./backend:/code
-      # - "${EB_LOG_BASE_DIR}/php-app:/var/log/celery-beat"
-    depends_on:
-      - database
-      - redis_server
-    env_file: .env
+  # celery_beat:  #Good for crontab and schedule tasks
+  #   container_name: ${PROJECT_NAME}_celery_beat
+  #   restart: always
+  #   # platform: linux/arm64/v8
+  #   build:
+  #     context: .
+  #     dockerfile: ./backend/Dockerfile
+  #     # args:
+  #     #   INSTALL_DEV: ${INSTALL_DEV-false}
+  #   command: celery -A backend.app.core.celery beat -l info -S celery_sqlalchemy_scheduler.schedulers:DatabaseScheduler -l info
+  #   volumes:
+  #     - ./backend:/code
+  #     # - "${EB_LOG_BASE_DIR}/php-app:/var/log/celery-beat"
+  #   depends_on:
+  #     - database
+  #     - redis_server
+  #   env_file: .env
 
-  dashboard:
-    build: 
-      context: ./flower
-    command: celery --broker=redis://${PROJECT_NAME}_redis_server:6379/0 flower --port=5555
-    ports:
-      - 5556:5555
-    environment:
-      - CELERY_BROKER_URL=${PROJECT_NAME}_redis_server://redis:6379/0
-      - CELERY_RESULT_BACKEND=${PROJECT_NAME}_redis_server://redis:6379/0
-    depends_on:
-      - database
-      - redis_server
-      - celery_worker
+  # dashboard:
+  #   build: 
+  #     context: ./flower
+  #   command: celery --broker=redis://${PROJECT_NAME}_redis_server:6379/0 flower --port=5555
+  #   ports:
+  #     - 5556:5555
+  #   environment:
+  #     - CELERY_BROKER_URL=${PROJECT_NAME}_redis_server://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=${PROJECT_NAME}_redis_server://redis:6379/0
+  #   depends_on:
+  #     - database
+  #     - redis_server
+  #     - celery_worker
 
-  minio_server:
-    image: minio/minio:latest
-    restart: always
-    container_name: ${PROJECT_NAME}_minio_server
-    volumes:
-      - ./minio/data:/data
-    expose:
-      - 9000
-      - 9091
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: http://stash.localhost
-    command: "server /data --console-address ':9090'"    
+  # minio_server:
+  #   image: minio/minio:latest
+  #   restart: always
+  #   container_name: ${PROJECT_NAME}_minio_server
+  #   volumes:
+  #     - ./minio/data:/data
+  #   expose:
+  #     - 9000
+  #     - 9091
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  #     MINIO_BROWSER_REDIRECT_URL: http://stash.localhost
+  #   command: "server /data --console-address ':9090'"    
 
   caddy_reverse_proxy:
     container_name: ${PROJECT_NAME}_caddy_reverse_proxy

@@ -13,12 +13,12 @@ class ITextDataRequest(TextDataBase):
 
 
 class ITextDataCreate(TextDataBase):
-    processed_urls_by_id: UUID
+    processed_urls_id: UUID
 
 
 # class IListTextDataCreate(TextDataBase):
 #     items: ITextDataCreate
-# processed_urls_by_id: UUID
+# processed_urls_id: UUID
 
 
 class IProcessedUrlsReadBasic(ProcessedUrlsBase):
@@ -27,13 +27,12 @@ class IProcessedUrlsReadBasic(ProcessedUrlsBase):
 
 class ITextDataRead(TextDataBase):
     id: UUID
-    processed_urls_by: IProcessedUrlsReadBasic | None = None
+    processed_urls: IProcessedUrlsReadBasic | None = None
 
 
 @optional()
 class ITextDataUpdateRequest(ITextDataRequest):
-    url: str
-    source_name: str
+    pass
 
 
 # All these fields are optional

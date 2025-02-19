@@ -21,7 +21,7 @@ from backend.app.utils.exceptions.common_exception import (
 #     return group
 
 
-async def get_source_by_id(
+async def get_source_id(
     source_id: Annotated[UUID, Path(description="The UUID id of the source")]
 ) -> Source:
     source = await crud.source.get(id=source_id)

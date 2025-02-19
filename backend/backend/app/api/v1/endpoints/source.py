@@ -36,7 +36,7 @@ async def get_sources_list(
 
 
 @router.get("/{source_id}")
-async def get_source_by_id(
+async def get_source_id(
     source_id: UUID,
     # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponseBase[ISourceRead]:
@@ -116,5 +116,6 @@ async def remove_source(
     current_source = await crud.source.get(id=source_id)
     if not current_source:
         raise IdNotFoundException(Source, id=source_id)
+    
     source = await crud.source.remove(id=source_id)
     return create_response(data=source)

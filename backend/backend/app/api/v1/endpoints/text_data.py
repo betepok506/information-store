@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends
 from fastapi_pagination import Params
 
 from backend.app import crud
-from backend.app.api import deps
+# from backend.app.api import deps
+from backend.app.utils.prepare_str import get_suf
 from backend.app.models.processed_urls_model import ProcessedUrls
 from backend.app.models.source_model import Source
-
+from sqlmodel import SQLModel, func, select
 # from backend.app.deps import group_deps, user_deps
 from backend.app.models.text_data_model import TextData
 from backend.app.schemas.processed_urls_schema import (
@@ -35,8 +36,10 @@ from backend.app.schemas.text_data_schema import (  # IListTextDataCreate,; IGro
 from backend.app.utils.exceptions import (
     IdNotFoundException,
     NameExistException,
+    UrlValidationError,
     NameNotFoundException,
 )
+from backend.app.utils.prepare_str import get_suf
 from backend.app.utils.hash import get_hash
 
 router = APIRouter()
@@ -51,6 +54,7 @@ async def get_text_data(
     Gets a paginated list of groups
     """
     groups = await crud.text_data.get_multi_paginated(params=params)
+    print(f"{groups=}")
     return create_response(data=groups)
 
 
@@ -64,6 +68,48 @@ async def get_text_data_by_id(
     """
     text_data = await crud.text_data.get(id=text_data_id)
     print(text_data)
+    if text_data:
+        return create_response(data=text_data)
+    else:
+        raise IdNotFoundException(TextData, text_data)
+
+
+# @router.post("/elastic_ids/")
+# async def get_text_data_by_id(
+#     elastic_ids: List[str],
+#     skip: int = 0,
+#     limit: int = 100,
+#     # current_user: User = Depends(deps.get_current_user()),
+# ) -> IPostResponseBase[List[ITextDataRead]]:
+#     """
+#     Gets a text data by its elastic ids
+#     """
+#     text_data = await crud.text_data.get_by_elastic_ids(
+#         list_ids=elastic_ids, skip=skip, limit=limit
+#     )
+#     if text_data:
+#         return create_response(data=text_data)
+#     else:
+#         raise IdNotFoundException(TextData, text_data)
+
+@router.post("/elastic_ids/")
+async def get_text_data_by_elastic_ids_paginated(
+    elastic_ids: List[str],
+    params: Params = Depends(),
+    # current_user: User = Depends(deps.get_current_user()),
+) -> IGetResponsePaginated[ITextDataRead]:
+    """
+    Gets a text data by its elastic search indexes
+    """
+    query = (
+        select(TextData
+               )
+        .where(TextData.elastic_id.in_(elastic_ids))
+    )
+    text_data = await crud.text_data.get_by_elastic_ids_paginated(
+        query=query, params=params
+    )
+    
     if text_data:
         return create_response(data=text_data)
     else:
@@ -95,8 +141,12 @@ async def create_text_data(
         raise NameNotFoundException(Source, name=obj_in.source_name)
 
     hashed_str = get_hash(obj_in.text)
+    if len(obj_in.url) < len(source.url):
+        raise UrlValidationError(ProcessedUrls)
+    
+    suf_url = get_suf(obj_in.url, source.url)
     processed_url = IProcessedUrlsCreate(
-        suf_url=obj_in.url, source_by_id=source.id, hash=hashed_str
+        suf_url=suf_url, source_id=source.id, hash=hashed_str
     )
     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
     # if text_data_current:
@@ -104,7 +154,7 @@ async def create_text_data(
     text_data = ITextDataCreate(
         text=obj_in.text,
         elastic_id=obj_in.elastic_id,
-        processed_urls_by_id=new_processed_url.id,
+        processed_urls_id=new_processed_url.id,
     )
 
     print(text_data)
@@ -140,14 +190,14 @@ async def create_text_data(
 #     print(get_hash(obj_in.text))
 #     hashed_str = get_hash(obj_in.text)
 #     processed_url = IProcessedUrlsCreate(suf_url=obj_in.url,
-#                                          source_by_id=source.id,
+#                                          source_id=source.id,
 #                                          hash=hashed_str)
 #     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
 #     # if text_data_current:
 #         # raise NameExistException(TextData, name=group.name)
 #     text_data = ITextDataCreate(text=obj_in.text,
 #                                 elastic_id=obj_in.elastic_id,
-#                                 processed_urls_by_id=new_processed_url.id)
+#                                 processed_urls_id=new_processed_url.id)
 
 #     print(text_data)
 #     new_text_data = await crud.text_data.create(obj_in=text_data)
@@ -176,19 +226,24 @@ async def update_text_data(
         raise IdNotFoundException(Source, id=text_data_id)
 
     current_processed_url = await crud.processed_urls.get(
-        id=cur_text_data.processed_urls_by_id
+        id=cur_text_data.processed_urls_id
     )
     if not current_processed_url:
-        raise IdNotFoundException(ProcessedUrls, id=cur_text_data.processed_urls_by_id)
+        raise IdNotFoundException(ProcessedUrls, id=cur_text_data.processed_urls_id)
 
     hashed_str = None
     if not obj_in.text is None:
         hashed_str = get_hash(obj_in.text)
 
+    if len(obj_in.url) < len(source.url):
+        raise UrlValidationError(ProcessedUrls)
+    
+    suf_url = get_suf(obj_in.url, source.url)
+    
     processed_urls_params = {
-        "suf_url": obj_in.url,
+        "suf_url": suf_url,
         "hash": hashed_str,
-        "source_by_id": source.id,
+        "source_id": source.id,
     }
     updated_processed_url = IProcessedUrlsUpdate(
         **{
@@ -203,7 +258,7 @@ async def update_text_data(
     )
     updated_text_data = ITextDataUpdate(
         **{key: value for key, value in obj_in.__dict__.items() if value is not None},
-        processed_urls_by_id=updated_processed_url.id,
+        processed_urls_id=updated_processed_url.id,
     )
 
     updated_text_data = await crud.text_data.update(
@@ -215,35 +270,9 @@ async def update_text_data(
 @router.delete("/{text_data_id}")
 async def remove_text_data(
     text_data_id: UUID,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IDeleteResponseBase[ITextDataRead]:
     """
     Deletes a text data by its id
     """
-    current_text_data = await crud.text_data.get(id=text_data_id)
-    if not current_text_data:
-        raise IdNotFoundException(TextData, id=text_data_id)
-
-    team = await crud.text_data.remove(id=text_data_id)
-    return create_response(data=team)
-
-
-# @router.post("/add_user/{user_id}/{group_id}")
-# async def add_user_into_a_group(
-#     user: User = Depends(user_deps.is_valid_user),
-#     group: Group = Depends(group_deps.get_group_by_id),
-#     # current_user: User = Depends(
-#     #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-#     # ),
-# ) -> IPostResponseBase[IGroupRead]:
-#     """
-#     Adds a user into a group
-
-#     Required roles:
-#     - admin
-#     - manager
-#     """
-#     group = await crud.group.add_user_to_group(user=user, group_id=group.id)
-#     return create_response(message="User added to group", data=group)
+    removed_text_data = await crud.text_data.remove(id=text_data_id)
+    return create_response(data=removed_text_data)
