@@ -1,9 +1,5 @@
 import gc
-
-# import logging
 import os
-
-# from uuid import UUID, uuid4
 import time
 from contextlib import asynccontextmanager
 from typing import Any
@@ -21,12 +17,10 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_limiter import FastAPILimiter
 
-# from fastapi_limiter.depends import WebSocketRateLimiter
 from jwt import DecodeError, ExpiredSignatureError, MissingRequiredClaimError
 from prometheus_client import generate_latest
+from backend.app.db.init_elastic_db import create_indexes
 
-# from langchain.chat_models import ChatOpenAI
-# from langchain.schema import HumanMessage
 from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
@@ -44,32 +38,14 @@ from backend.app.api.deps import (
 from backend.app.api.v1.api import api_router as api_router_v1
 from backend.app.core.config import ModeEnum, settings
 from backend.app.core.security import decode_token
-
-# from backend.app.schemas.common_schema import IChatResponse, IUserMessage
 from backend.app.utils.fastapi_globals import GlobalsMiddleware, g
 from backend.app.utils.uuid6 import uuid7
 
-# from transformers import pipeline
 
 
 os.environ["HTTP_PROXY"] = "http://130.100.7.222:1082"
 os.environ["HTTPS_PROXY"] = "http://130.100.7.222:1082"
 
-# from pydantic import BaseModel
-
-
-# class MokeModel(BaseModel):
-#     id: int
-#     name: str
-
-#     def __init__(self, *args, **kwds):
-#         pass
-
-#     def __call__(self, *args, **kwds):
-#         return "World!"
-
-#     class Config:
-#         orm_mode = True
 
 
 async def user_id_identifier(request: Request):
@@ -123,16 +99,7 @@ async def lifespan(app: FastAPI):
     FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
     await FastAPILimiter.init(redis_client, identifier=user_id_identifier)
 
-    # Load a pre-trained sentiment analysis model as a dictionary to an easy cleanup
-    # models: dict[str, Any] = {
-    #     # "sentiment_model": pipeline(
-    #     #     "sentiment-analysis",
-    #     #     model="distilbert-base-uncased-finetuned-sst-2-english",
-    #     # ),
-    #     "sentiment_model": MokeModel
-    # }
-    # g.set_default("sentiment_model", models["sentiment_model"])
-    # print("startup fastapi")
+    await create_indexes()
     yield
     # shutdown
     await FastAPICache.clear()

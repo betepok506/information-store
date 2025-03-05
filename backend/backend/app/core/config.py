@@ -3,7 +3,7 @@ import secrets
 from enum import Enum
 from typing import Any
 
-from pydantic import AnyHttpUrl, EmailStr, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, EmailStr, PostgresDsn, field_validator, HttpUrl
 from pydantic_core.core_schema import FieldValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,15 +21,19 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 1  # 1 hour
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 100  # 100 days
-    OPENAI_API_KEY: str
+    # OPENAI_API_KEY: str
+
     POSTGRESQL_USERNAME: str
     POSTGRESQL_PASSWORD: str
     POSTGRESQL_HOST: str
     POSTGRESQL_PORT: int
     POSTGRESQL_DATABASE: str
-    DATABASE_CELERY_NAME: str = "celery_schedule_jobs"
+
+    # DATABASE_CELERY_NAME: str = "celery_schedule_jobs"
+
     REDIS_HOST: str
     REDIS_PORT: str
+
     DB_POOL_SIZE: int = 83
     WEB_CONCURRENCY: int = 9
     POOL_SIZE: int = max(DB_POOL_SIZE // WEB_CONCURRENCY, 5)
@@ -49,63 +53,84 @@ class Settings(BaseSettings):
                 )
         return v
 
-    SYNC_CELERY_DATABASE_URI: PostgresDsn | str = ""
+    ELASTIC_SEARCH_DATABASE_HOST: str
+    ELASTIC_SEARCH_DATABASE_PORT: int
+    ELASTIC_SEARCH_DATABASE_URI: HttpUrl | str = ""
+    ELASTIC_VECTOR_INDEX: str = "text_vectors"
+    ELASTIC_VECTOR_DIMS: int = 768
 
-    @field_validator("SYNC_CELERY_DATABASE_URI", mode="after")
-    def assemble_celery_db_connection(
+    @field_validator("ELASTIC_SEARCH_DATABASE_URI", mode="after")
+    def assemble_elastic_db_connection(
         cls, v: str | None, info: FieldValidationInfo
     ) -> Any:
         if isinstance(v, str):
             if v == "":
-                t = str(
-                    PostgresDsn.build(
-                        scheme="postgresql",
-                        username=info.data["POSTGRESQL_USERNAME"],
-                        password=info.data["POSTGRESQL_PASSWORD"],
-                        host=info.data["POSTGRESQL_HOST"],
-                        port=info.data["POSTGRESQL_PORT"],
-                        path=info.data["DATABASE_CELERY_NAME"],
+                return str(
+                    HttpUrl.build(
+                        scheme="http",
+                        host=info.data["ELASTIC_SEARCH_DATABASE_HOST"],
+                        port=info.data["ELASTIC_SEARCH_DATABASE_PORT"],
                     )
                 )
-                return "db+" + t
         return v
 
-    SYNC_CELERY_BEAT_DATABASE_URI: PostgresDsn | str = ""
+    # SYNC_CELERY_DATABASE_URI: PostgresDsn | str = ""
 
-    @field_validator("SYNC_CELERY_BEAT_DATABASE_URI", mode="after")
-    def assemble_celery_beat_db_connection(
-        cls, v: str | None, info: FieldValidationInfo
-    ) -> Any:
+    # @field_validator("SYNC_CELERY_DATABASE_URI", mode="after")
+    # def assemble_celery_db_connection(
+    #     cls, v: str | None, info: FieldValidationInfo
+    # ) -> Any:
+    #     if isinstance(v, str):
+    #         if v == "":
+    #             t = str(
+    #                 PostgresDsn.build(
+    #                     scheme="postgresql",
+    #                     username=info.data["POSTGRESQL_USERNAME"],
+    #                     password=info.data["POSTGRESQL_PASSWORD"],
+    #                     host=info.data["POSTGRESQL_HOST"],
+    #                     port=info.data["POSTGRESQL_PORT"],
+    #                     path=info.data["DATABASE_CELERY_NAME"],
+    #                 )
+    #             )
+    #             return "db+" + t
+    #     return v
 
-        if isinstance(v, str):
-            if v == "":
-                return PostgresDsn.build(
-                    scheme="postgresql+psycopg2",
-                    username=info.data["POSTGRESQL_USERNAME"],
-                    password=info.data["POSTGRESQL_PASSWORD"],
-                    host=info.data["POSTGRESQL_HOST"],
-                    port=info.data["POSTGRESQL_PORT"],
-                    path=info.data["DATABASE_CELERY_NAME"],
-                )
-        return v
+    # SYNC_CELERY_BEAT_DATABASE_URI: PostgresDsn | str = ""
 
-    ASYNC_CELERY_BEAT_DATABASE_URI: PostgresDsn | str = ""
+    # @field_validator("SYNC_CELERY_BEAT_DATABASE_URI", mode="after")
+    # def assemble_celery_beat_db_connection(
+    #     cls, v: str | None, info: FieldValidationInfo
+    # ) -> Any:
 
-    @field_validator("ASYNC_CELERY_BEAT_DATABASE_URI", mode="after")
-    def assemble_async_celery_beat_db_connection(
-        cls, v: str | None, info: FieldValidationInfo
-    ) -> Any:
-        if isinstance(v, str):
-            if v == "":
-                return PostgresDsn.build(
-                    scheme="postgresql+asyncpg",
-                    username=info.data["POSTGRESQL_USERNAME"],
-                    password=info.data["POSTGRESQL_PASSWORD"],
-                    host=info.data["POSTGRESQL_HOST"],
-                    port=info.data["POSTGRESQL_PORT"],
-                    path=info.data["DATABASE_CELERY_NAME"],
-                )
-        return v
+    #     if isinstance(v, str):
+    #         if v == "":
+    #             return PostgresDsn.build(
+    #                 scheme="postgresql+psycopg2",
+    #                 username=info.data["POSTGRESQL_USERNAME"],
+    #                 password=info.data["POSTGRESQL_PASSWORD"],
+    #                 host=info.data["POSTGRESQL_HOST"],
+    #                 port=info.data["POSTGRESQL_PORT"],
+    #                 path=info.data["DATABASE_CELERY_NAME"],
+    #             )
+    #     return v
+
+    # ASYNC_CELERY_BEAT_DATABASE_URI: PostgresDsn | str = ""
+
+    # @field_validator("ASYNC_CELERY_BEAT_DATABASE_URI", mode="after")
+    # def assemble_async_celery_beat_db_connection(
+    #     cls, v: str | None, info: FieldValidationInfo
+    # ) -> Any:
+    #     if isinstance(v, str):
+    #         if v == "":
+    #             return PostgresDsn.build(
+    #                 scheme="postgresql+asyncpg",
+    #                 username=info.data["POSTGRESQL_USERNAME"],
+    #                 password=info.data["POSTGRESQL_PASSWORD"],
+    #                 host=info.data["POSTGRESQL_HOST"],
+    #                 port=info.data["POSTGRESQL_PORT"],
+    #                 path=info.data["DATABASE_CELERY_NAME"],
+    #             )
+    #     return v
 
     FIRST_SUPERUSER_EMAIL: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
