@@ -15,7 +15,6 @@ async def create_indexes():
                 body={
                     "mappings": {
                         "properties": {
-                            "text": {"type": "text"},
                             "vector": {
                                 "type": "dense_vector",
                                 "dims": settings.ELASTIC_VECTOR_DIMS,
