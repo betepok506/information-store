@@ -24,15 +24,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
     rm -rf /var/lib/apt/lists/*
 
-# COPY pyproject.toml /code/
-# RUN mkdir -p /code/backend/
 COPY backend/pyproject.toml backend/Makefile /code/
 
 WORKDIR /code
-# RUN make install
-# Allow installing dev dependencies to run tests
-# ARG INSTALL_DEV=false
-# RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; else poetry install --no-root --only main ; fi"
 RUN poetry config virtualenvs.create false
 RUN pip install --upgrade pip
 RUN make install

@@ -4,8 +4,6 @@ from backend.app.models.processed_urls_model import ProcessedUrlsBase
 from backend.app.models.text_data_model import TextDataBase
 from backend.app.utils.partial import optional
 
-# from .user_schema import IUserReadWithoutGroups
-
 
 class ITextDataRequest(TextDataBase):
     url: str  # URL адресс откуда взят текст
@@ -14,11 +12,6 @@ class ITextDataRequest(TextDataBase):
 
 class ITextDataCreate(TextDataBase):
     processed_urls_id: UUID
-
-
-# class IListTextDataCreate(TextDataBase):
-#     items: ITextDataCreate
-# processed_urls_id: UUID
 
 
 class IProcessedUrlsReadBasic(ProcessedUrlsBase):

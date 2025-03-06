@@ -5,12 +5,10 @@ from fastapi import APIRouter, Depends
 from fastapi_pagination import Params
 
 from backend.app import crud
-# from backend.app.api import deps
 from backend.app.utils.prepare_str import get_suf
 from backend.app.models.processed_urls_model import ProcessedUrls
 from backend.app.models.source_model import Source
 from sqlmodel import SQLModel, func, select
-# from backend.app.deps import group_deps, user_deps
 from backend.app.models.text_data_model import TextData
 from backend.app.schemas.processed_urls_schema import (
     IProcessedUrlsCreate,
@@ -24,15 +22,13 @@ from backend.app.schemas.response_schema import (
     IPutResponseBase,
     create_response,
 )
-from backend.app.schemas.text_data_schema import (  # IListTextDataCreate,; IGroupReadWithUsers,
+from backend.app.schemas.text_data_schema import (
     ITextDataCreate,
     ITextDataRead,
     ITextDataRequest,
     ITextDataUpdate,
     ITextDataUpdateRequest,
 )
-
-# from backend.app.schemas.role_schema import IRoleEnum
 from backend.app.utils.exceptions import (
     IdNotFoundException,
     NameExistException,
@@ -48,7 +44,6 @@ router = APIRouter()
 @router.get("")
 async def get_text_data(
     params: Params = Depends(),
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ITextDataRead]:
     """
     Gets a paginated list of groups
@@ -61,7 +56,6 @@ async def get_text_data(
 @router.get("/{text_data_id}")
 async def get_text_data_by_id(
     text_data_id: UUID,
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponseBase[ITextDataRead]:
     """
     Gets a group by its id
@@ -92,24 +86,20 @@ async def get_text_data_by_id(
 #     else:
 #         raise IdNotFoundException(TextData, text_data)
 
+
 @router.post("/elastic_ids/")
 async def get_text_data_by_elastic_ids_paginated(
     elastic_ids: List[str],
     params: Params = Depends(),
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ITextDataRead]:
     """
     Gets a text data by its elastic search indexes
     """
-    query = (
-        select(TextData
-               )
-        .where(TextData.elastic_id.in_(elastic_ids))
-    )
+    query = select(TextData).where(TextData.elastic_id.in_(elastic_ids))
     text_data = await crud.text_data.get_by_elastic_ids_paginated(
         query=query, params=params
     )
-    
+
     if text_data:
         return create_response(data=text_data)
     else:
@@ -119,11 +109,6 @@ async def get_text_data_by_elastic_ids_paginated(
 @router.post("")
 async def create_text_data(
     obj_in: ITextDataRequest,
-    # source : Source = Depends (
-    # )
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPostResponseBase[ITextDataRead]:
     """
     Creates a new group
@@ -135,7 +120,6 @@ async def create_text_data(
         "source_name": "string22"
     }
     """
-    # text_data_current = await crud.text_data.get_text_data_by_name(name=text_data.name)
     source = await crud.source.get_source_by_name(name=obj_in.source_name)
     if not source:
         raise NameNotFoundException(Source, name=obj_in.source_name)
@@ -143,14 +127,12 @@ async def create_text_data(
     hashed_str = get_hash(obj_in.text)
     if len(obj_in.url) < len(source.url):
         raise UrlValidationError(ProcessedUrls)
-    
+
     suf_url = get_suf(obj_in.url, source.url)
     processed_url = IProcessedUrlsCreate(
         suf_url=suf_url, source_id=source.id, hash=hashed_str
     )
     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
-    # if text_data_current:
-    # raise NameExistException(TextData, name=group.name)
     text_data = ITextDataCreate(
         text=obj_in.text,
         elastic_id=obj_in.elastic_id,
@@ -162,56 +144,10 @@ async def create_text_data(
     return create_response(data=new_text_data)
 
 
-# @router.post("")
-# async def create_list_text_data(
-#     obj_in: List[ITextDataCreate],
-#     # source : Source = Depends (
-
-#     # )
-#     # current_user: User = Depends(
-#     #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-#     # ),
-# ) -> IPostResponseBase[ITextDataRead]:
-#     """
-#     Creates a new group
-
-#     {
-#         "text": "ssssssssssfdsfgsdgdgdgsfgsfg",
-#         "elastic_id": "string",
-#         "url": "http://localhost:222/api/v1/endpoints",
-#         "source_name": "string22"
-#     }
-#     """
-#     # text_data_current = await crud.text_data.get_text_data_by_name(name=text_data.name)
-#     source = await crud.source.get_source_by_name(name=obj_in.source_name)
-#     if not source:
-#         raise NameNotFoundException(Source, name=obj_in.source_name)
-
-#     print(get_hash(obj_in.text))
-#     hashed_str = get_hash(obj_in.text)
-#     processed_url = IProcessedUrlsCreate(suf_url=obj_in.url,
-#                                          source_id=source.id,
-#                                          hash=hashed_str)
-#     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
-#     # if text_data_current:
-#         # raise NameExistException(TextData, name=group.name)
-#     text_data = ITextDataCreate(text=obj_in.text,
-#                                 elastic_id=obj_in.elastic_id,
-#                                 processed_urls_id=new_processed_url.id)
-
-#     print(text_data)
-#     new_text_data = await crud.text_data.create(obj_in=text_data)
-#     return create_response(data=new_text_data)
-
-
 @router.put("/{text_data_id}")
 async def update_text_data(
     obj_in: ITextDataUpdateRequest,
     text_data_id: str,
-    # current_group: TextData = Depends(group_deps.get_group_by_id), # TODO: Сделать зависимость для запроса текущих данных по id
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPutResponseBase[ITextDataRead]:
     """
     Updates a text data by its id
@@ -237,9 +173,9 @@ async def update_text_data(
 
     if len(obj_in.url) < len(source.url):
         raise UrlValidationError(ProcessedUrls)
-    
+
     suf_url = get_suf(obj_in.url, source.url)
-    
+
     processed_urls_params = {
         "suf_url": suf_url,
         "hash": hashed_str,

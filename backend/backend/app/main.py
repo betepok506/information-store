@@ -24,8 +24,6 @@ from backend.app.db.init_elastic_db import create_indexes
 from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
-
-# from backend.app import crud
 from backend.app.api.deps import (
     get_redis_client,
     http_200_counter,

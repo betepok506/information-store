@@ -25,7 +25,6 @@ router = APIRouter()
 @router.get("")
 async def get_sources_list(
     params: Params = Depends(),
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ISourceRead]:
     """
     Gets a paginated list of sources
@@ -38,7 +37,6 @@ async def get_sources_list(
 @router.get("/{source_id}")
 async def get_source_id(
     source_id: UUID,
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponseBase[ISourceRead]:
     """
     Gets a source by its id
@@ -52,9 +50,6 @@ async def get_source_id(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_source(
     source: ISourceCreate,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPostResponseBase[ISourceRead]:
     """
     Creates a new source
@@ -71,9 +66,6 @@ async def create_source(
 async def update_source(
     source_id: UUID,
     new_source: ISourceUpdate,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPostResponseBase[ISourceRead]:
     """
     Update a source by its id
@@ -102,9 +94,6 @@ async def update_source(
 @router.delete("/{source_id}")
 async def remove_source(
     source_id: UUID,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IDeleteResponseBase[ISourceRead]:
     """
     Deletes a source by its id
