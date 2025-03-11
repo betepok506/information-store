@@ -1,11 +1,12 @@
 from uuid import UUID
-
+from sqlmodel import SQLModel
 from backend.app.models.processed_urls_model import ProcessedUrlsBase
 from backend.app.models.text_data_model import TextDataBase
 from backend.app.utils.partial import optional
 
 
-class ITextDataRequest(TextDataBase):
+class ITextDataRequest(SQLModel):
+    text: str
     url: str  # URL адресс откуда взят текст
     source_name: str  # Имя источника
 

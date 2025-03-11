@@ -31,9 +31,8 @@ from backend.app.schemas.text_data_schema import (
 )
 from backend.app.utils.exceptions import (
     IdNotFoundException,
-    NameExistException,
     UrlValidationError,
-    NameNotFoundException,
+    SourceNotFoundException,
 )
 from backend.app.utils.prepare_str import get_suf
 from backend.app.utils.hash import get_hash
@@ -115,22 +114,21 @@ async def create_text_data(
 
     {
         "text": "ssssssssssfdsfgsdgdgdgsfgsfg",
-        "elastic_id": "string",
         "url": "http://localhost:222/api/v1/endpoints",
         "source_name": "string22"
     }
     """
     source = await crud.source.get_source_by_name(name=obj_in.source_name)
     if not source:
-        raise NameNotFoundException(Source, name=obj_in.source_name)
+        raise SourceNotFoundException(Source, name=obj_in.source_name)
 
     hashed_str = get_hash(obj_in.text)
-    if len(obj_in.url) < len(source.url):
-        raise UrlValidationError(ProcessedUrls)
+    # if len(obj_in.url) < len(source.url):
+    #     raise UrlValidationError(ProcessedUrls)
 
-    suf_url = get_suf(obj_in.url, source.url)
+    # suf_url = get_suf(obj_in.url, source.url)
     processed_url = IProcessedUrlsCreate(
-        suf_url=suf_url, source_id=source.id, hash=hashed_str
+        url=obj_in.url, source_id=source.id, hash=hashed_str
     )
     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
     text_data = ITextDataCreate(
@@ -174,10 +172,10 @@ async def update_text_data(
     if len(obj_in.url) < len(source.url):
         raise UrlValidationError(ProcessedUrls)
 
-    suf_url = get_suf(obj_in.url, source.url)
+    # suf_url = get_suf(obj_in.url, source.url)
 
     processed_urls_params = {
-        "suf_url": suf_url,
+        "url": obj_in.url,
         "hash": hashed_str,
         "source_id": source.id,
     }

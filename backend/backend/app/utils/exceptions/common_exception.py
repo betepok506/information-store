@@ -40,45 +40,64 @@ class IdNotFoundException(HTTPException, Generic[ModelType]):
         )
 
 
-class NameNotFoundException(HTTPException, Generic[ModelType]):
+class SourceNotFoundException(HTTPException, Generic[ModelType]):
     def __init__(
         self,
         model: Type[ModelType],
-        name: Optional[str] = None,
+        source: Optional[str] = None,
         headers: Optional[Dict[str, Any]] = None,
     ) -> None:
-        if name:
+        if source:
             super().__init__(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Unable to find the {model.__name__} named {name}.",
+                detail=f"Unable to find the {model.__name__} source {source}.",
                 headers=headers,
             )
         else:
             super().__init__(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"{model.__name__} name not found.",
+                detail=f"{model.__name__} source not found.",
                 headers=headers,
             )
 
-
-class NameExistException(HTTPException, Generic[ModelType]):
+class ProcessedUrlNotFoundException(HTTPException, Generic[ModelType]):
     def __init__(
         self,
         model: Type[ModelType],
-        name: Optional[str] = None,
+        url: Optional[str] = None,
         headers: Optional[Dict[str, Any]] = None,
     ) -> None:
-        if name:
+        if url:
+            super().__init__(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Unable to find the {model.__name__} url {url}.",
+                headers=headers,
+            )
+        else:
+            super().__init__(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"{model.__name__} url not found.",
+                headers=headers,
+            )
+
+class SourceExistException(HTTPException, Generic[ModelType]):
+    def __init__(
+        self,
+        model: Type[ModelType],
+        source: Optional[str] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if source:
             super().__init__(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"The {model.__name__} name {name} already exists.",
+                detail=f"The {model.__name__} source {source} already exists.",
                 headers=headers,
             )
             return
 
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"The {model.__name__} name already exists.",
+            detail=f"The {model.__name__} source already exists.",
             headers=headers,
         )
 

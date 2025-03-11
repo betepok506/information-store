@@ -6,8 +6,7 @@ from typing_extensions import Annotated
 from backend.app import crud
 from backend.app.models.source_model import Source
 from backend.app.utils.exceptions.common_exception import (
-    IdNotFoundException,
-    NameNotFoundException,
+    IdNotFoundException
 )
 
 

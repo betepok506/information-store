@@ -16,7 +16,7 @@ from backend.app.schemas.source_schema import ISourceCreate, ISourceRead, ISourc
 from backend.app.utils.exceptions import (
     ContentNoChangeException,
     IdNotFoundException,
-    NameExistException,
+    SourceExistException,
 )
 
 router = APIRouter()
@@ -56,7 +56,7 @@ async def create_source(
     """
     source_current = await crud.source.get_source_by_name(name=source.name)
     if source_current:
-        raise NameExistException(Source, name=source_current.name)
+        raise SourceExistException(Source, name=source_current.name)
 
     source = await crud.source.create(obj_in=source)
     return create_response(data=source)
@@ -83,7 +83,7 @@ async def update_source(
     # TODO: Проверить условия обновления элемента
     exist_source = await crud.source.get_source_by_name(name=new_source.name)
     if exist_source:
-        raise NameExistException(Source, name=exist_source.name)
+        raise SourceExistException(Source, name=exist_source.name)
 
     heroe_updated = await crud.source.update(
         obj_current=current_source, obj_new=new_source

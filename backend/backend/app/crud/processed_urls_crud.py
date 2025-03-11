@@ -20,5 +20,14 @@ class CRUDProcessedUrls(
         )
         return processed_url.scalar_one_or_none()
 
+    async def get_by_url(
+        self, *, url: str, db_session: AsyncSession | None = None
+    ) -> ProcessedUrls | None:
+        db_session = db_session or super().get_db().session
+        processed_url = await db_session.execute(
+            select(ProcessedUrls).where(ProcessedUrls.url == url)
+        )
+        return processed_url.scalar_one_or_none()
+
 
 processed_urls = CRUDProcessedUrls(ProcessedUrls)
