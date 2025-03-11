@@ -25,13 +25,13 @@ from backend.app.schemas.response_schema import (
     IPutResponseBase,
     create_response,
 )
-from backend.app.schemas.text_data_schema import (  # IListTextDataCreate,; IGroupReadWithUsers,
-    ITextDataCreate,
-    ITextDataRead,
-    ITextDataRequest,
-    ITextDataUpdate,
-    ITextDataUpdateRequest,
-)
+# from backend.app.schemas.text_data_schema import (  # IListTextDataCreate,; IGroupReadWithUsers,
+#     ITextDataCreate,
+#     ITextDataRead,
+#     ITextDataRequest,
+#     ITextDataUpdate,
+#     ITextDataUpdateRequest,
+# )
 
 # from backend.app.schemas.role_schema import IRoleEnum
 from backend.app.utils.exceptions import (
