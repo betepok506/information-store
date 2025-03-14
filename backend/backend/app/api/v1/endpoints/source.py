@@ -17,6 +17,7 @@ from backend.app.utils.exceptions import (
     ContentNoChangeException,
     IdNotFoundException,
     SourceExistException,
+    SourceNotFoundException
 )
 
 router = APIRouter()
@@ -107,4 +108,18 @@ async def remove_source(
         raise IdNotFoundException(Source, id=source_id)
     
     source = await crud.source.remove(id=source_id)
+    return create_response(data=source)
+
+
+@router.get("/check/{name}")
+async def check_source_by_name(
+    name: str,
+) -> IGetResponseBase[ISourceRead]:
+    """
+    Запрос источника по его имени
+    """
+    source = await crud.source.get_by_name(name=name)
+    if not source:
+        raise SourceNotFoundException(Source, source=name)
+    
     return create_response(data=source)

@@ -18,7 +18,7 @@ from backend.app.schemas.text_vector_schema import (
 router = APIRouter()
 
 
-@router.post("/add_vector")
+@router.post("")
 async def add_vector(
     text_vector: ITextVectorCreate,
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),

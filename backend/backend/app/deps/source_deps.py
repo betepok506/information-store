@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import Path, Query
+from fastapi import Path
 from typing_extensions import Annotated
 
 from backend.app import crud

@@ -4,6 +4,7 @@ from backend.app.models.processed_urls_model import ProcessedUrlsBase
 from backend.app.models.text_data_model import TextDataBase
 from backend.app.models.source_model import SourceBase
 from backend.app.utils.partial import optional
+from sqlmodel import SQLModel
 
 
 class IProcessedUrlsCreate(ProcessedUrlsBase):
@@ -20,6 +21,14 @@ class IProcessedUrlsUpdate(ProcessedUrlsBase):
 class ISourceReadBasic(SourceBase):
     id: UUID
 
+class IProcessedUrlsReadBasic(SQLModel):
+    url: str
+    hash: str
+    
+class IPorcessedUrlsReadFull(SQLModel):
+    url: str
+    hash: str
+    source_name: str
 
 class IProcessedUrlsResponse(BaseModel):
     id: UUID | int

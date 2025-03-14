@@ -6,13 +6,10 @@ from fastapi_pagination import Params
 
 from backend.app import crud
 from backend.app.api.deps import get_db
-from backend.app.utils.prepare_str import get_suf
 from backend.app.models.processed_urls_model import ProcessedUrls
 from backend.app.models.source_model import Source
-from sqlmodel import SQLModel, func, select
-
+from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
-# from backend.app.deps import group_deps, user_deps
 from elasticsearch import AsyncElasticsearch
 from backend.app.api.deps import get_elasticsearch_client
 from backend.app.models.text_data_model import TextData
@@ -31,9 +28,6 @@ from backend.app.schemas.response_schema import (
 )
 from backend.app.schemas.text_data_schema import (
     ITextDataCreate,
-    # ITextDataRead,
-    # ITextDataRequest,
-    # ITextDataReadNotVectors,
     ITextDataUpdate,
     ITextDataUpdateRequest,
     ITextDataCreateRequest,
@@ -42,10 +36,8 @@ from backend.app.schemas.text_data_schema import (
 )
 from backend.app.utils.exceptions import (
     IdNotFoundException,
-    UrlValidationError,
     SourceNotFoundException,
 )
-from backend.app.utils.prepare_str import get_suf
 from backend.app.utils.hash import get_hash
 
 router = APIRouter()
@@ -54,7 +46,6 @@ router = APIRouter()
 @router.get("")
 async def get_text_data(
     params: Params = Depends(),
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ITextDataReadBasic]:
     """
     Gets a paginated list of groups
@@ -87,34 +78,13 @@ async def get_text_data_by_id(
         raise IdNotFoundException(TextData, text_data)
 
 
-# @router.post("/elastic_ids/")
-# async def get_text_data_by_id(
-#     elastic_ids: List[str],
-#     skip: int = 0,
-#     limit: int = 100,
-#     # current_user: User = Depends(deps.get_current_user()),
-# ) -> IPostResponseBase[List[ITextDataRead]]:
-#     """
-#     Gets a text data by its elastic ids
-#     """
-#     text_data = await crud.text_data.get_by_elastic_ids(
-#         list_ids=elastic_ids, skip=skip, limit=limit
-#     )
-#     if text_data:
-#         return create_response(data=text_data)
-#     else:
-#         raise IdNotFoundException(TextData, text_data)
-
-
 @router.post("/elastic_ids/")
 async def get_text_data_by_elastic_ids_paginated(
     elastic_ids: List[str],
     params: Params = Depends(),
-
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ITextDataReadBasic]:
     """
-    Gets a text data by its elastic search indexes
+    Запрос текстов по индексам Elastic Search
     """
     query = (
         select(TextData, ProcessedUrls, Source)
@@ -136,32 +106,19 @@ async def get_text_data_by_elastic_ids_paginated(
 @router.post("")
 async def create_text_data(
     obj_in: ITextDataCreateRequest,
-    # source : Source = Depends (
-    # )
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
 ) -> IPostResponseBase[ITextDataReadBasic]:
     """ """
-    # text_data_current = await crud.text_data.get_text_data_by_name(name=text_data.name)
-
+    # todo: Сделать транзакцию
     source = await crud.source.get_source_by_name(name=obj_in.source_name)
     if not source:
-        raise SourceNotFoundException(Source, name=obj_in.source_name)
+        raise SourceNotFoundException(Source, source=obj_in.source_name)
 
     hashed_str = get_hash(obj_in.text)
-
-    # if len(obj_in.url) < len(source.url):
-    #     raise UrlValidationError(ProcessedUrls)
-
-    # suf_url = get_suf(obj_in.url, source.url)
-
     processed_url = IProcessedUrlsCreate(
         url=obj_in.url, source_id=source.id, hash=hashed_str
     )
     new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
-
 
     # Добавление вектора в Elastic Search
     try:
@@ -180,8 +137,6 @@ async def create_text_data(
     )
 
     new_text_data = await crud.text_data.create(obj_in=text_data)
-
-    print(new_text_data)
     return create_response(
         data=ITextDataReadFull(
             id=new_text_data.id,
@@ -195,20 +150,13 @@ async def create_text_data(
     )
 
 
-
 @router.put("/{text_data_id}")
 async def update_text_data(
     obj_in: ITextDataUpdateRequest,
     text_data_id: str,
-
-    # current_group: TextData = Depends(group_deps.get_group_by_id), # TODO: Сделать зависимость для запроса текущих данных по id
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
     db_session: AsyncSession = Depends(get_db),
 ) -> IPutResponseBase[ITextDataReadFull]:
-
     """
     Updates a text data by its id
 
@@ -223,7 +171,9 @@ async def update_text_data(
                 id=cur_text_data.processed_urls_id
             )
             if not current_processed_url:
-                raise IdNotFoundException(ProcessedUrls, id=cur_text_data.processed_urls_id)
+                raise IdNotFoundException(
+                    ProcessedUrls, id=cur_text_data.processed_urls_id
+                )
 
             source = await crud.source.get(id=current_processed_url.source_id)
             if not source:
@@ -233,16 +183,8 @@ async def update_text_data(
             if not obj_in.text is None:
                 hashed_str = get_hash(obj_in.text)
 
-
-            suf_url = None
-            if obj_in.url is not None:
-                if len(obj_in.url) < len(source.url):
-                    raise UrlValidationError(ProcessedUrls)
-                else:
-                    suf_url = get_suf(obj_in.url, source.url)
-
             processed_urls_params = {
-                "suf_url": suf_url,
+                "url": obj_in.url,
                 "hash": hashed_str,
                 "source_id": source.id,
             }
@@ -264,34 +206,44 @@ async def update_text_data(
                 item = await es.update(
                     index="text_vectors",
                     id=cur_text_data.elastic_id,
-                    body={"text": "sdsdas", "vector": obj_in.vector},
+                    body={
+                        "doc": {  # Обязательный блок для update
+                            "text": "sdsdas",
+                            "vector": obj_in.vector,
+                        }
+                    },
+                    # body={"text": "sdsdas", "vector": obj_in.vector},
                 )
                 elastic_id = item["_id"]
 
             response = await es.get(index="text_vectors", id=cur_text_data.elastic_id)
-            vector = response.body['_source']['vector']
-            
+            vector = response.body["_source"]["vector"]
+
             updated_text_data = ITextDataUpdate()
-            values = {"elastic_id": elastic_id, "processed_urls_id": updated_processed_url.id}
+            values = {
+                "elastic_id": elastic_id,
+                "processed_urls_id": updated_processed_url.id,
+            }
             updated_text_data = merge_schemas(updated_text_data, obj_in, values)
             obj_updated_text_data = await crud.text_data.update(
                 obj_current=cur_text_data, obj_new=updated_text_data
             )
-            
+
             obj_response = ITextDataReadFull(
-                            id=obj_updated_text_data.id,
-                            text=obj_updated_text_data.text,
-                            elastic_id=obj_updated_text_data.elastic_id,
-                            url=source.url + updated_processed_url.suf_url,
-                            processed_urls_id=updated_processed_url.id,
-                            vector=vector
-                        )
+                id=obj_updated_text_data.id,
+                text=obj_updated_text_data.text,
+                elastic_id=obj_updated_text_data.elastic_id,
+                url=updated_processed_url.url,
+                processed_urls_id=updated_processed_url.id,
+                vector=vector,
+            )
             await db_session.commit()
             return create_response(data=obj_response)
     except Exception as e:
         # Откатываем транзакцию в случае ошибки
         await db_session.rollback()
         raise Response(f"Internal server error. Error: {e}", status_code=500)
+
 
 @router.delete("/{text_data_id}")
 async def remove_text_data(
