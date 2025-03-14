@@ -7,48 +7,9 @@ from backend.app.models.text_data_model import TextDataBase
 from backend.app.schemas.text_vector_schema import TextVectorBase
 from backend.app.utils.partial import optional
 
-# from .user_schema import IUserReadWithoutGroups
-
-
-# class ITextDataRequest(TextDataBase, TextVectorBase):
-#     url: str  # URL адресс откуда взят текст
-#     source_name: str  # Имя источника
-#     elastic_id: str = Field(..., exclude=True)
-
-
-# class ITextDataCreate(TextDataBase):
-#     processed_urls_id: UUID
-
-
-# # class IListTextDataCreate(TextDataBase):
-# #     items: ITextDataCreate
-# # processed_urls_id: UUID
-
 
 class IProcessedUrlsReadBasic(ProcessedUrlsBase):
     id: UUID
-
-
-# class ITextDataReadNotVectors(TextDataBase):
-#     id: UUID
-#     processed_urls: IProcessedUrlsReadBasic | None = None
-
-
-# class ITextDataRead(ITextDataReadNotVectors, TextVectorBase):
-#     pass
-
-
-# @optional()
-# class ITextDataUpdateRequest(ITextDataRequest):
-#     pass
-
-
-# # All these fields are optional
-# @optional()
-# class ITextDataUpdate(ITextDataCreate):
-#     _elastic_id: str
-
-# Схемы запросов
 
 
 class ITextDataCreateRequest(SQLModel):
@@ -62,9 +23,9 @@ class ITextDataCreateRequest(SQLModel):
 class ITextDataUpdateRequest(ITextDataCreateRequest):
     pass
 
+
 # Схемы создания записей в БД
 class ITextDataCreate(SQLModel):
-    # pass
     text: str  # Текст записи
     elastic_id: str  # Индекс записи в Elastic Search
     processed_urls_id: UUID
@@ -76,12 +37,13 @@ class ITextDataUpdate(ITextDataCreate):
 
 
 # Схема ответов
-class ITextDataReadBasic(TextDataBase):
+class ITextDataReadBasic(SQLModel):
     id: UUID
     text: str
     elastic_id: str
     url: str
-    processed_urls_id: UUID
+    # processed_urls_id: UUID
+
     # processed_urls: IProcessedUrlsReadBasic | None = None
 
 

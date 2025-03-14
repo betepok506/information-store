@@ -42,4 +42,3 @@ class ITextVectorBaseRead(TextVectorBase):
 
 class ITextVectorSearchRead(ITextVectorBaseRead, ITextVectorSearch):
     score: float
-    # vector: List[float]

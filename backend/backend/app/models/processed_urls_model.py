@@ -7,7 +7,7 @@ from backend.app.models.source_model import Source
 
 
 class ProcessedUrlsBase(SQLModel):
-    suf_url: str = Field(index=True)
+    url: str = Field(index=True)
     hash: str = Field(index=True)
 
 

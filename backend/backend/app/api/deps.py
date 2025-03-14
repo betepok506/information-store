@@ -47,7 +47,3 @@ class ElasticsearchClient:
 
 async def get_elasticsearch_client():
     return ElasticsearchClient.get_instance()
-
-# async def get_jobs_db() -> AsyncGenerator[AsyncSession, None]:
-#     async with SessionLocalCelery() as session:
-#         yield session

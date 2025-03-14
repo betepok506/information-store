@@ -1,8 +1,9 @@
 from .common_exception import (
     ContentNoChangeException,
     IdNotFoundException,
-    NameExistException,
-    NameNotFoundException,
+    SourceExistException,
+    ProcessedUrlNotFoundException,
+    SourceNotFoundException,
     UrlValidationError
 )
 from .user_exceptions import UserSelfDeleteException

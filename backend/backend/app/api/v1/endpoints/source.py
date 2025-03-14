@@ -16,7 +16,8 @@ from backend.app.schemas.source_schema import ISourceCreate, ISourceRead, ISourc
 from backend.app.utils.exceptions import (
     ContentNoChangeException,
     IdNotFoundException,
-    NameExistException,
+    SourceExistException,
+    SourceNotFoundException
 )
 
 router = APIRouter()
@@ -25,7 +26,6 @@ router = APIRouter()
 @router.get("")
 async def get_sources_list(
     params: Params = Depends(),
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponsePaginated[ISourceRead]:
     """
     Gets a paginated list of sources
@@ -38,7 +38,6 @@ async def get_sources_list(
 @router.get("/{source_id}")
 async def get_source_id(
     source_id: UUID,
-    # current_user: User = Depends(deps.get_current_user()),
 ) -> IGetResponseBase[ISourceRead]:
     """
     Gets a source by its id
@@ -52,16 +51,13 @@ async def get_source_id(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_source(
     source: ISourceCreate,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPostResponseBase[ISourceRead]:
     """
     Creates a new source
     """
     source_current = await crud.source.get_source_by_name(name=source.name)
     if source_current:
-        raise NameExistException(Source, name=source_current.name)
+        raise SourceExistException(Source, name=source_current.name)
 
     source = await crud.source.create(obj_in=source)
     return create_response(data=source)
@@ -71,9 +67,6 @@ async def create_source(
 async def update_source(
     source_id: UUID,
     new_source: ISourceUpdate,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IPostResponseBase[ISourceRead]:
     """
     Update a source by its id
@@ -91,7 +84,7 @@ async def update_source(
     # TODO: Проверить условия обновления элемента
     exist_source = await crud.source.get_source_by_name(name=new_source.name)
     if exist_source:
-        raise NameExistException(Source, name=exist_source.name)
+        raise SourceExistException(Source, name=exist_source.name)
 
     heroe_updated = await crud.source.update(
         obj_current=current_source, obj_new=new_source
@@ -102,9 +95,6 @@ async def update_source(
 @router.delete("/{source_id}")
 async def remove_source(
     source_id: UUID,
-    # current_user: User = Depends(
-    #     deps.get_current_user(required_roles=[IRoleEnum.admin, IRoleEnum.manager])
-    # ),
 ) -> IDeleteResponseBase[ISourceRead]:
     """
     Deletes a source by its id
@@ -118,4 +108,18 @@ async def remove_source(
         raise IdNotFoundException(Source, id=source_id)
     
     source = await crud.source.remove(id=source_id)
+    return create_response(data=source)
+
+
+@router.get("/check/{name}")
+async def check_source_by_name(
+    name: str,
+) -> IGetResponseBase[ISourceRead]:
+    """
+    Запрос источника по его имени
+    """
+    source = await crud.source.get_by_name(name=name)
+    if not source:
+        raise SourceNotFoundException(Source, source=name)
+    
     return create_response(data=source)

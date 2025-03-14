@@ -56,10 +56,8 @@ services:
       - 6379
     env_file: .env
 
-  
-  
-
 volumes:
   db_docker:
   caddy_data:
   caddy_config:
+  

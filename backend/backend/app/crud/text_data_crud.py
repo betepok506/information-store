@@ -9,11 +9,8 @@ from backend.app.models.source_model import Source
 from backend.app.models.processed_urls_model import ProcessedUrls
 from backend.app.schemas.text_data_schema import ITextDataCreate, ITextDataUpdate
 from backend.app.schemas.text_data_schema import (
-    ITextDataCreateRequest,
-    ITextDataUpdateRequest,
     ITextDataReadBasic,
 )
-from typing import Any
 from sqlmodel.sql.expression import Select
 
 
@@ -47,23 +44,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         query = select(self.model).where(self.model.id == id)
         response = await db_session.execute(query)
         return response.scalar_one_or_none()
-
-    # async def get_by_elastic_ids(
-    #     self,
-    #     *,
-    #     list_ids: list[UUID | str],
-    #     skip: int = 0,
-    #     limit: int = 100,
-    #     db_session: AsyncSession | None = None,
-    # ) -> list[ModelType] | None:
-    #     db_session = db_session or self.db.session
-    #     response = await db_session.execute(
-    #         select(self.model)
-    #         .offset(skip)
-    #         .limit(limit)
-    #         .where(self.model.elastic_id.in_(list_ids))
-    #     )
-    #     return response.scalars().all()
 
     async def get_multi_paginated(
         self,
@@ -121,8 +101,8 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
                     id=text_data.id,
                     text=text_data.text,
                     elastic_id=text_data.elastic_id,
-                    url=source.url + processed_urls.suf_url,
-                    processed_urls_id=processed_urls.id,
+                    url=processed_urls.url,
+                    # processed_urls_id=processed_urls.id,
                 )
             )
         return structured_results
@@ -149,5 +129,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         await db_session.delete(obj)
         await db_session.commit()
         return structured_results[0]
+
 
 text_data = CRUDTextData(TextData)

@@ -18,7 +18,7 @@ from backend.app.schemas.text_vector_schema import (
 router = APIRouter()
 
 
-@router.post("/add_vector")
+@router.post("")
 async def add_vector(
     text_vector: ITextVectorCreate,
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
@@ -48,13 +48,6 @@ async def search_neighbors(
     index_name = "text_vectors"
     query = {
         "query": {
-            # "script_score": {
-            #     "query": {"match_all": {}},
-            #     "script": {
-            #         "source": "cosineSimilarity(params.vector, 'vector') + 1.0",
-            #         "params": {"vector": text_vector.vector},
-            #     },
-            # }
             "knn": {
                 "field": "vector",
                 "query_vector": text_vector.vector,
@@ -77,12 +70,10 @@ async def search_neighbors(
             )
         )
 
-    # params_dict = {"size": 5, "page": 1}
     params = Params()
     params.page = 1
     params.size = count_elem["count"]
     response = IGetResponsePaginated.create(
         response, total=len(response), params=params
     )
-    print(f"!!!!!! {response}")
     return create_response(data=response, message="Search Results")
