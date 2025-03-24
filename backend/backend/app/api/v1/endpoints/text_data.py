@@ -34,6 +34,7 @@ from backend.app.schemas.text_data_schema import (
     ITextDataReadBasic,
     ITextDataReadFull,
 )
+from backend.app.schemas.source_schema import ISourceCreate
 from backend.app.utils.exceptions import (
     IdNotFoundException,
     SourceNotFoundException,
@@ -109,10 +110,12 @@ async def create_text_data(
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
 ) -> IPostResponseBase[ITextDataReadBasic]:
     """ """
-    # todo: Сделать транзакцию
+    # TODO: Сделать транзакцию
     source = await crud.source.get_source_by_name(name=obj_in.source_name)
     if not source:
-        raise SourceNotFoundException(Source, source=obj_in.source_name)
+        # Если нет источника, создаем его
+        # raise SourceNotFoundException(Source, source=obj_in.source_name)
+        source = await crud.source.create(obj_in= ISourceCreate(name=obj_in.source_name, url=obj_in.url))
 
     hashed_str = get_hash(obj_in.text)
     processed_url = IProcessedUrlsCreate(
