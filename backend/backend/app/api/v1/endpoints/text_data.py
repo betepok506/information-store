@@ -17,6 +17,7 @@ from backend.app.schemas.processed_urls_schema import (
     IProcessedUrlsCreate,
     IProcessedUrlsUpdate,
 )
+from backend.app.services import TextDataService
 from backend.app.utils.map_schema import merge_schemas
 from backend.app.schemas.response_schema import (
     IDeleteResponseBase,
@@ -111,46 +112,54 @@ async def create_text_data(
 ) -> IPostResponseBase[ITextDataReadBasic]:
     """ """
     # TODO: Сделать транзакцию
-    source = await crud.source.get_source_by_name(name=obj_in.source_name)
-    if not source:
-        # Если нет источника, создаем его
-        # raise SourceNotFoundException(Source, source=obj_in.source_name)
-        source = await crud.source.create(obj_in= ISourceCreate(name=obj_in.source_name, url=obj_in.url))
-
-    hashed_str = get_hash(obj_in.text)
-    processed_url = IProcessedUrlsCreate(
-        url=obj_in.url, source_id=source.id, hash=hashed_str
-    )
-    new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
-
-    # Добавление вектора в Elastic Search
-    try:
-        item = await es.index(
-            index="text_vectors",
-            body={"text": "sdsdas", "vector": obj_in.vector},
-        )
-        print(f"{item['_id']=}")
-        elastic_id = item["_id"]
+    service = TextDataService()
+    try: 
+        result = await service.create_text_data(obj_in, es)
     except Exception as e:
         return Response(f"Internal server error. Error: {e}", status_code=500)
-    text_data = ITextDataCreate(
-        text=obj_in.text,
-        elastic_id=elastic_id,
-        processed_urls_id=new_processed_url.id,
-    )
+    return create_response(data=result)
+    
+    
+    # source = await crud.source.get_source_by_name(name=obj_in.source_name)
+    # if not source:
+    #     # Если нет источника, создаем его
+    #     # raise SourceNotFoundException(Source, source=obj_in.source_name)
+    #     source = await crud.source.create(obj_in= ISourceCreate(name=obj_in.source_name, url=obj_in.url))
 
-    new_text_data = await crud.text_data.create(obj_in=text_data)
-    return create_response(
-        data=ITextDataReadFull(
-            id=new_text_data.id,
-            url=obj_in.url,
-            # processed_urls=new_text_data.processed_urls,
-            processed_urls_id=new_processed_url.id,
-            text=new_text_data.text,
-            elastic_id=new_text_data.elastic_id,
-            vector=obj_in.vector,
-        )
-    )
+    # hashed_str = get_hash(obj_in.text)
+    # processed_url = IProcessedUrlsCreate(
+    #     url=obj_in.url, source_id=source.id, hash=hashed_str
+    # )
+    # new_processed_url = await crud.processed_urls.create(obj_in=processed_url)
+
+    # # Добавление вектора в Elastic Search
+    # try:
+    #     item = await es.index(
+    #         index="text_vectors",
+    #         body={"text": "sdsdas", "vector": obj_in.vector},
+    #     )
+    #     print(f"{item['_id']=}")
+    #     elastic_id = item["_id"]
+    # except Exception as e:
+    #     return Response(f"Internal server error. Error: {e}", status_code=500)
+    # text_data = ITextDataCreate(
+    #     text=obj_in.text,
+    #     elastic_id=elastic_id,
+    #     processed_urls_id=new_processed_url.id,
+    # )
+
+    # new_text_data = await crud.text_data.create(obj_in=text_data)
+    # return create_response(
+    #     data=ITextDataReadFull(
+    #         id=new_text_data.id,
+    #         url=obj_in.url,
+    #         # processed_urls=new_text_data.processed_urls,
+    #         processed_urls_id=new_processed_url.id,
+    #         text=new_text_data.text,
+    #         elastic_id=new_text_data.elastic_id,
+    #         vector=obj_in.vector,
+    #     )
+    # )
 
 
 @router.put("/{text_data_id}")

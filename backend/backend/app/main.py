@@ -1,3 +1,4 @@
+import asyncio
 import gc
 import os
 import time
@@ -13,9 +14,9 @@ from fastapi import (
     status,
 )
 from fastapi_async_sqlalchemy import SQLAlchemyMiddleware, db
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from fastapi_limiter import FastAPILimiter
+# from fastapi_cache import FastAPICache
+# from fastapi_cache.backends.redis import RedisBackend
+# from fastapi_limiter import FastAPILimiter
 
 from jwt import DecodeError, ExpiredSignatureError, MissingRequiredClaimError
 from prometheus_client import generate_latest
@@ -38,12 +39,15 @@ from backend.app.core.config import ModeEnum, settings
 from backend.app.core.security import decode_token
 from backend.app.utils.fastapi_globals import GlobalsMiddleware, g
 from backend.app.utils.uuid6 import uuid7
-
+from backend.app.core.rabbitmq import RabbitMQClient
+from backend.app.services.message_processing import TextDataMessageProcessor
+from backend.app.consumers.handlers.message_handlers import handle_message_event
 
 
 os.environ["HTTP_PROXY"] = "http://130.100.7.222:1082"
 os.environ["HTTPS_PROXY"] = "http://130.100.7.222:1082"
 
+rabbitmq_client = RabbitMQClient()
 
 
 async def user_id_identifier(request: Request):
@@ -90,19 +94,31 @@ async def user_id_identifier(request: Request):
     return ip + ":" + request.scope["path"]
 
 
+async def setup_rabbitmq():
+    # Инициализация обработчиков
+    processor = TextDataMessageProcessor()
+    rabbitmq_client.register_handler(
+        "messages",
+        lambda msg: handle_message_event(msg, processor)
+    )
+    
+    await rabbitmq_client.connect()
+    asyncio.create_task(rabbitmq_client.start_consumers())
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    redis_client = await get_redis_client()
-    FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
-    await FastAPILimiter.init(redis_client, identifier=user_id_identifier)
-
+    # redis_client = await get_redis_client()
+    # FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+    # await FastAPILimiter.init(redis_client, identifier=user_id_identifier)
+    await setup_rabbitmq()
     await create_indexes()
     yield
     # shutdown
-    await FastAPICache.clear()
-    await FastAPILimiter.close()
+    # await FastAPICache.clear()
+    # await FastAPILimiter.close()
     # models.clear()
+    await rabbitmq_client.close()
     g.cleanup()
     gc.collect()
 

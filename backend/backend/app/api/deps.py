@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-
+from contextlib import asynccontextmanager
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
 from elasticsearch import AsyncElasticsearch
@@ -28,7 +28,7 @@ async def get_redis_client() -> Redis:
     )
     return redis
 
-
+@asynccontextmanager
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
