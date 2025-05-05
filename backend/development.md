@@ -1,9 +1,10 @@
 # Запуск сервера Fast Api
 
+Скопировать файл `.env.example` и вставить его как `.env`
+При разработке в VSCode с помощью devcontainers установить расширение `Dev Containers`
 
 Для работы с ElaticSearch
 Расширение ria.elastic
-
 
 
 Перед запуском:
