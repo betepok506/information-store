@@ -29,15 +29,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         * `schema`: A Pydantic model (schema) class
         """
         self.model = model
-        self.db = db
-
-    def get_db(self) -> type(db):
-        return self.db
 
     async def get(
         self, *, id: UUID | str, db_session: AsyncSession | None = None
     ) -> ModelType | None:
-        db_session = db_session or self.db.session
         query = select(self.model).where(self.model.id == id)
         response = await db_session.execute(query)
         return response.scalar_one_or_none()
@@ -48,7 +43,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         list_ids: list[UUID | str],
         db_session: AsyncSession | None = None,
     ) -> list[ModelType] | None:
-        db_session = db_session or self.db.session
         response = await db_session.execute(
             select(self.model).where(self.model.id.in_(list_ids))
         )
@@ -57,7 +51,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_count(
         self, db_session: AsyncSession | None = None
     ) -> ModelType | None:
-        db_session = db_session or self.db.session
         response = await db_session.execute(
             select(func.count()).select_from(select(self.model).subquery())
         )
@@ -71,7 +64,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         query: T | Select[T] | None = None,
         db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
-        db_session = db_session or self.db.session
         if query is None:
             query = select(self.model).offset(skip).limit(limit).order_by(self.model.id)
         response = await db_session.execute(query)
@@ -84,7 +76,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         query: T | Select[T] | None = None,
         db_session: AsyncSession | None = None,
     ) -> Page[ModelType]:
-        db_session = db_session or self.db.session
         if query is None:
             query = select(self.model)
 
@@ -100,8 +91,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         query: T | Select[T] | None = None,
         db_session: AsyncSession | None = None,
     ) -> Page[ModelType]:
-        db_session = db_session or self.db.session
-
         columns = self.model.__table__.columns
 
         if order_by is None or order_by not in columns:
@@ -124,7 +113,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         order: IOrderEnum | None = IOrderEnum.ascendent,
         db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
-        db_session = db_session or self.db.session
+        # db_session = db_session or self.db.session
 
         columns = self.model.__table__.columns
 
@@ -156,21 +145,12 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         created_by_id: UUID | str | None = None,
         db_session: AsyncSession | None = None,
     ) -> ModelType:
-        db_session = db_session or self.db.session
         db_obj = self.model.model_validate(obj_in)  # type: ignore
 
         if created_by_id:
             db_obj.created_by_id = created_by_id
-
-        try:
-            db_session.add(db_obj)
-            await db_session.commit()
-        except exc.IntegrityError:
-            db_session.rollback()
-            raise HTTPException(
-                status_code=409,
-                detail="Resource already exists",
-            )
+        db_session.add(db_obj)
+        await db_session.flush()
         await db_session.refresh(db_obj)
         return db_obj
 
@@ -181,22 +161,14 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         created_by_id: UUID | str | None = None,
         db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
-        db_session = db_session or self.db.session
         data = [self.model.model_validate(obj).dict() for obj in obj_in]  # type: ignore
 
         if created_by_id:
             for item in data:
                 item["created_by_id"] = created_by_id
 
-        try:
-            await db_session.bulk_insert_mappings(self.model, data)
-            await db_session.commit()
-        except exc.IntegrityError:
-            db_session.rollback()
-            raise HTTPException(
-                status_code=409,
-                detail="Resource already exists",
-            )
+        await db_session.bulk_insert_mappings(self.model, data)
+        await db_session.flush()
         return [self.model(**item) for item in data]
 
     async def update(
@@ -206,7 +178,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         obj_new: UpdateSchemaType | dict[str, Any] | ModelType,
         db_session: AsyncSession | None = None,
     ) -> ModelType:
-        db_session = db_session or self.db.session
 
         if isinstance(obj_new, dict):
             update_data = obj_new
@@ -218,18 +189,17 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             setattr(obj_current, field, update_data[field])
 
         db_session.add(obj_current)
-        await db_session.commit()
+        await db_session.flush()
         await db_session.refresh(obj_current)
         return obj_current
 
     async def remove(
         self, *, id: UUID | str, db_session: AsyncSession | None = None
     ) -> ModelType:
-        db_session = db_session or self.db.session
         response = await db_session.execute(
             select(self.model).where(self.model.id == id)
         )
         obj = response.scalar_one()
         await db_session.delete(obj)
-        await db_session.commit()
+        await db_session.flush()
         return obj

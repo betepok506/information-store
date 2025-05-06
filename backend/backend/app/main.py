@@ -43,7 +43,8 @@ from backend.app.core.rabbitmq import RabbitMQClient
 from backend.app.services.message_processing import TextDataMessageProcessor
 from backend.app.consumers.handlers.message_handlers import handle_message_event
 
-
+#todo: Отделить полностью слой сервисной логики от API
+#TODO: Вывести в конфиг названия очередей
 os.environ["HTTP_PROXY"] = "http://130.100.7.222:1082"
 os.environ["HTTPS_PROXY"] = "http://130.100.7.222:1082"
 

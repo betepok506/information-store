@@ -19,7 +19,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         self, *, id: UUID | str, db_session: AsyncSession | None = None
     ) -> ITextDataReadBasic | None:
         """Возвращает объект необходимый для пользователя"""
-        db_session = db_session or self.db.session
         query = (
             select(TextData, ProcessedUrls, Source)
             .join(
@@ -40,7 +39,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         self, *, id: UUID | str, db_session: AsyncSession | None = None
     ) -> ModelType | None:
         """Метод возвращает объект базы данных"""
-        db_session = db_session or self.db.session
         query = select(self.model).where(self.model.id == id)
         response = await db_session.execute(query)
         return response.scalar_one_or_none()
@@ -52,7 +50,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         query: T | Select[T] | None = None,
         db_session: AsyncSession | None = None,
     ) -> Page[ITextDataReadBasic]:
-        db_session = db_session or self.db.session
         if query is None:
             query = select(self.model)
 
@@ -72,7 +69,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         query: T | Select[T] | None = None,
         db_session: AsyncSession | None = None,
     ) -> Page[ITextDataReadBasic]:
-        db_session = db_session or self.db.session
         if query is None:
             query = select(self.model)
 
@@ -89,7 +85,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
     async def get_group_by_name(
         self, *, name: str, db_session: AsyncSession | None = None
     ) -> TextData:
-        db_session = db_session or super().get_db().session
         group = await db_session.execute(select(TextData).where(TextData.name == name))
         return group.scalar_one_or_none()
 
@@ -110,7 +105,6 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
     async def remove(
         self, *, id: UUID | str, db_session: AsyncSession | None = None
     ) -> ITextDataReadBasic:
-        db_session = db_session or self.db.session
         query = (
             select(TextData, ProcessedUrls, Source)
             .join(
@@ -127,7 +121,7 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         structured_results = await self._conversion_to_schemas_read_basic([result])
         obj, _, _ = result
         await db_session.delete(obj)
-        await db_session.commit()
+        await db_session.flush()
         return structured_results[0]
 
 

@@ -33,6 +33,18 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
 
+# @asynccontextmanager
+# async def get_db() -> AsyncGenerator[AsyncSession, None]:
+#     async with SessionLocal() as session:
+#         async with session.begin():  # Автоматическое начало транзакции
+#             try:
+#                 yield session
+#                 await session.commit()  # Автокоммит при успешном выполнении
+#             except Exception:
+#                 await session.rollback()  # Откат при ошибке
+#                 raise
+
+
 class ElasticsearchClient:
     _instance = None
 
