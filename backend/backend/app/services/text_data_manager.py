@@ -27,7 +27,7 @@ from backend.app.utils.hash import get_hash
 from backend.app.utils.map_schema import merge_schemas
 
 
-class TextDataService:
+class TextDataManager:
     """Класс, реализует сервисную логику взаимодействия с таблицей TextData"""
 
     def __init__(self, db: AsyncSession, es: AsyncElasticsearch | None = None):

@@ -18,7 +18,7 @@ from backend.app.schemas.processed_urls_schema import (
     IProcessedUrlsCreate,
     IProcessedUrlsUpdate,
 )
-from backend.app.services import TextDataService
+from backend.app.services import TextDataManager
 from backend.app.utils.map_schema import merge_schemas
 from backend.app.schemas.response_schema import (
     IDeleteResponseBase,
@@ -54,7 +54,7 @@ async def get_text_data(
     Gets a paginated list of groups
     """
     async with db as session:
-        service = TextDataService(db=session)
+        service = TextDataManager(db=session)
         try:
             result = await service.get_text_data(params=params)
         except Exception as e:
@@ -70,7 +70,7 @@ async def get_text_data_by_id(
     Gets a group by its id
     """
     async with db as session:
-        service = TextDataService(db=session)
+        service = TextDataManager(db=session)
         try:
             result = await service.get_text_data_by_id(text_data_id=text_data_id)
         except Exception as e:
@@ -92,7 +92,7 @@ async def get_by_elastic_ids_paginated(
     Запрос текстов по индексам Elastic Search
     """
     async with db as session:
-        service = TextDataService(db=session)
+        service = TextDataManager(db=session)
         try:
             result = await service.get_by_elastic_ids_paginated(
                 elastic_ids=elastic_ids, params=params
@@ -114,7 +114,7 @@ async def create_text_data(
 ) -> IPostResponseBase[ITextDataReadBasic]:
     """ """
     async with db as session:
-        service = TextDataService(db=session, es=es)
+        service = TextDataManager(db=session, es=es)
         try:
             result = await service.create_text_data(obj_in, "text_vectors")
         except Exception as e:
@@ -134,7 +134,7 @@ async def update_text_data(
 
     """
     async with db as session:
-        service = TextDataService(db=session, es=es)
+        service = TextDataManager(db=session, es=es)
         try:
             result = await service.update_text_data(
                 obj_in, "text_vectors", text_data_id

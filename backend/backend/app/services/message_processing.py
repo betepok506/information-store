@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 from backend.app.schemas import ITextDataCreateRequest
 from backend.app.api.deps import get_elasticsearch_client
-from backend.app.services import TextDataService
+from backend.app.services import TextDataManager
 from backend.app.api.deps import get_db
 
 
