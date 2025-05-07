@@ -1,6 +1,5 @@
 import asyncio
 import aio_pika
-from aio_pika.abc import AbstractIncomingMessage
 from tenacity import retry, stop_after_attempt, wait_exponential
 from backend.app.core.config import settings
 

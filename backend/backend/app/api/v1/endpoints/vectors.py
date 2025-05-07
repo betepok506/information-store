@@ -14,6 +14,7 @@ from backend.app.schemas.text_vector_schema import (
     ITextVectorSearch,
     ITextVectorSearchRead,
 )
+from backend.app.core.config import settings
 
 router = APIRouter()
 
@@ -25,7 +26,7 @@ async def add_vector(
 ) -> IPostResponseBase[ITextVectorBaseRead]:
     try:
         item = await es.index(
-            index="text_vectors",
+            index=settings.ELASTIC_VECTOR_INDEX,
             body={"text": "sdsdas", "vector": text_vector.vector},
         )
         print(f"{item['_id']=}")
@@ -45,7 +46,7 @@ async def search_neighbors(
     text_vector: ITextVectorSearch,
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
 ) -> IGetResponsePaginated[ITextVectorSearchRead]:
-    index_name = "text_vectors"
+    index_name = settings.ELASTIC_VECTOR_INDEX
     query = {
         "query": {
             "knn": {
@@ -57,7 +58,7 @@ async def search_neighbors(
     }
     count_elem = await es.count(index=index_name)
     result = await es.search(index=index_name, body=query, size=text_vector.k)
-    
+
     # todo: Проверить случай, когда элементов не найдено
     response = []
     for v in result["hits"]["hits"]:

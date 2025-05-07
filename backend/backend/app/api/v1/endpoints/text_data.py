@@ -7,19 +7,11 @@ from fastapi_pagination import Params
 # from fastapi_async_sqlalchemy import db
 from backend.app import crud
 from backend.app.api.deps import get_db
-from backend.app.models.processed_urls_model import ProcessedUrls
-from backend.app.models.source_model import Source
-from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from elasticsearch import AsyncElasticsearch
 from backend.app.api.deps import get_elasticsearch_client
 from backend.app.models.text_data_model import TextData
-from backend.app.schemas.processed_urls_schema import (
-    IProcessedUrlsCreate,
-    IProcessedUrlsUpdate,
-)
 from backend.app.services import TextDataManager
-from backend.app.utils.map_schema import merge_schemas
 from backend.app.schemas.response_schema import (
     IDeleteResponseBase,
     IGetResponseBase,
@@ -29,19 +21,15 @@ from backend.app.schemas.response_schema import (
     create_response,
 )
 from backend.app.schemas.text_data_schema import (
-    ITextDataCreate,
-    ITextDataUpdate,
     ITextDataUpdateRequest,
     ITextDataCreateRequest,
     ITextDataReadBasic,
     ITextDataReadFull,
 )
-from backend.app.schemas.source_schema import ISourceCreate
 from backend.app.utils.exceptions import (
-    IdNotFoundException,
-    SourceNotFoundException,
+    IdNotFoundException
 )
-from backend.app.utils.hash import get_hash
+from backend.app.core.config import settings
 
 router = APIRouter()
 
@@ -116,7 +104,7 @@ async def create_text_data(
     async with db as session:
         service = TextDataManager(db=session, es=es)
         try:
-            result = await service.create_text_data(obj_in, "text_vectors")
+            result = await service.create_text_data(obj_in, settings.ELASTIC_VECTOR_INDEX)
         except Exception as e:
             return Response(f"Internal server error. Error: {e}", status_code=500)
         return create_response(data=result)
@@ -137,7 +125,7 @@ async def update_text_data(
         service = TextDataManager(db=session, es=es)
         try:
             result = await service.update_text_data(
-                obj_in, "text_vectors", text_data_id
+                obj_in, settings.ELASTIC_VECTOR_INDEX, text_data_id
             )
         except Exception as e:
             return Response(f"Internal server error. Error: {e}", status_code=500)

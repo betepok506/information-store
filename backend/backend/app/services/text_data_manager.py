@@ -219,7 +219,7 @@ class TextDataManager:
     async def _get_or_create_source(
         self, name: str, url: str, db_session: AsyncSession | None = None
     ) -> Source:
-        source = await crud.source.get_source_by_name(name=name, db_session=db_session)
+        source = await crud.source.get_by_name(name=name, db_session=db_session)
         if not source:
             # Если нет источника, создаем его
             source = await crud.source.create(

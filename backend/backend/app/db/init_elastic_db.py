@@ -1,7 +1,7 @@
 from elasticsearch.exceptions import RequestError
 
 from backend.app.api.deps import get_elasticsearch_client
-from backend.app.core.config import ModeEnum, settings
+from backend.app.core.config import settings
 
 
 async def create_indexes():
