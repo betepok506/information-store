@@ -10,9 +10,9 @@ class TextDataMessageProcessor:
         try:
             # Валидация через Pydantic схему
             obj_in = ITextDataCreateRequest(**raw_data)
-            service = TextDataService()
             es = await get_elasticsearch_client()
             db = get_db()
+            service = TextDataManager()
             async with db as session:
                 result = await service.create_text_data(obj_in, es, session)
             return True
