@@ -3,7 +3,7 @@ version: '3.8'
 services:
   fastapi_server:
     container_name: fastapi_server_${PROJECT_NAME}
-    build: 
+    build:
       context: .
       dockerfile: ./backend/Dockerfile
     restart: always
@@ -15,7 +15,10 @@ services:
       - 8000:8000
     env_file: .env
     depends_on:
-      - database
+      database:
+        condition: service_healthy
+      elastic_search:
+        condition: service_healthy
 
   database:
     image: bitnami/postgresql
@@ -30,15 +33,16 @@ services:
       - 5454:5432 # Remove this on production
     expose:
       - 5432
-    # environment:
-    #   - POSTGRESQL_USERNAME=${DATABASE_USER}
-    #   # - POSTGRESQL_PASSWORD=${DATABASE_PASSWORD}
-    #   # - POSTGRESQL_PASSWORD=postgres
-    #   - POSTGRESQL_DATABASE=${DATABASE_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   elastic_search:
     container_name: elastic_search_${PROJECT_NAME}
     image: elasticsearch:8.17.2
+    restart: always
     deploy:
       resources:
         limits:
@@ -47,22 +51,21 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-    # ports:
-    #   - 9200:9200
     expose:
       - 9200
       - 9300
-
-  redis_server:
-    image: redis:alpine
-    container_name: redis_server_${PROJECT_NAME}
-    restart: always
-    expose:
-      - 6379
-    env_file: .env
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+  # redis_server:
+  #   image: redis:alpine
+  #   container_name: redis_server_${PROJECT_NAME}
+  #   restart: always
+  #   expose:
+  #     - 6379
+  #   env_file: .env
 
 volumes:
   db_docker:
-  caddy_data:
-  caddy_config:
-  
