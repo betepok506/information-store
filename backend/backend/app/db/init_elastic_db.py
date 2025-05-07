@@ -1,11 +1,8 @@
 from elasticsearch.exceptions import RequestError
-
-from backend.app.api.deps import get_elasticsearch_client
 from backend.app.core.config import settings
 
 
-async def create_indexes():
-    es = await get_elasticsearch_client()
+async def create_indexes(es):
     if await es.indices.exists(index=settings.ELASTIC_VECTOR_INDEX):
         print(f"Индекс {settings.ELASTIC_VECTOR_INDEX} существует")
     else:

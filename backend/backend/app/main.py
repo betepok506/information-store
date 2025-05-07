@@ -11,11 +11,14 @@ from fastapi import (
 )
 from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
 from prometheus_client import generate_latest
-from backend.app.db.init_elastic_db import create_indexes
-
 from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
+
+from backend.app.db.init_elastic_db import create_indexes
+from backend.app.api.deps import get_db
+from backend.app.api.deps import get_elasticsearch_client
+from backend.app.core.healthcheck import wait_for_postgres, wait_for_elasticsearch
 from backend.app.api.deps import (
     http_200_counter,
     http_404_counter,
@@ -52,12 +55,20 @@ async def setup_rabbitmq():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    es = await get_elasticsearch_client()
+    db = get_db()
+    # Ожидание доступности сервисов
+    async with db as session:
+        await wait_for_postgres(session)
+    await wait_for_elasticsearch(es)
+    
     # Startup
     await setup_rabbitmq()
-    await create_indexes()
+    await create_indexes(es)
     yield
     # shutdown
     await rabbitmq_client.close()
+    es.close()
     g.cleanup()
     gc.collect()
 
