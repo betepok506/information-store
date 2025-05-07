@@ -8,7 +8,7 @@ from backend.app.schemas.source_schema import ISourceCreate, ISourceUpdate
 
 class CRUDSource(CRUDBase[Source, ISourceCreate, ISourceUpdate]):
     async def get_by_name(
-        self, *, name: str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, name: str
     ) -> Source:
         source = await db_session.execute(select(Source).where(Source.name == name))
         return source.scalar_one_or_none()

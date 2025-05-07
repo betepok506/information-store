@@ -45,14 +45,14 @@ class TextDataManager:
             .join(Source, ProcessedUrls.source_id == Source.id, isouter=True)
         )
         groups = await crud.text_data.get_multi_paginated(
-            params=params, query=query, db_session=self.db
+            db_session=self.db, params=params, query=query
         )
         return groups
 
     async def get_text_data_by_id(
         self, text_data_id: UUID
     ) -> ITextDataReadBasic | None:
-        return await crud.text_data.get(id=text_data_id, db_session=self.db)
+        return await crud.text_data.get(db_session=self.db, id=text_data_id)
 
     async def get_by_elastic_ids_paginated(
         self, elastic_ids: List[str], params: Params
@@ -68,7 +68,7 @@ class TextDataManager:
             .where(TextData.elastic_id.in_(elastic_ids))  # Фильтрация по массиву ID
         )
         result = await crud.text_data.get_by_elastic_ids_paginated(
-            query=query, params=params, db_session=self.db
+            db_session=self.db, query=query, params=params
         )
         return result
 
@@ -89,9 +89,9 @@ class TextDataManager:
 
             # Добавление обработанного url в базу данных
             new_processed_url = await crud.processed_urls.create(
-                obj_in=processed_url, db_session=self.db
+                db_session=self.db, obj_in=processed_url
             )
-
+            print(7)
             # Elasticsearch
             elastic_id = await self._create_elastic_record(
                 index, obj_in.text, obj_in.vector
@@ -103,7 +103,7 @@ class TextDataManager:
                 processed_urls_id=new_processed_url.id,
             )
             new_text_data = await crud.text_data.create(
-                obj_in=text_data, db_session=self.db
+                db_session=self.db, obj_in=text_data
             )
 
             return ITextDataReadFull(
@@ -123,13 +123,13 @@ class TextDataManager:
     ) -> ITextDataReadFull:
         async def _update_operation():
             cur_text_data = await crud.text_data.get_db_object(
-                id=text_data_id, db_session=self.db
+                db_session=self.db, id=text_data_id
             )
             if not cur_text_data:
                 raise IdNotFoundException(TextData, cur_text_data)
 
             current_processed_url = await crud.processed_urls.get(
-                id=cur_text_data.processed_urls_id, db_session=self.db
+                db_session=self.db, id=cur_text_data.processed_urls_id
             )
             if not current_processed_url:
                 raise IdNotFoundException(
@@ -137,7 +137,7 @@ class TextDataManager:
                 )
 
             source = await crud.source.get(
-                id=current_processed_url.source_id, db_session=self.db
+                db_session=self.db, id=current_processed_url.source_id
             )
             if not source:
                 raise IdNotFoundException(Source, id=text_data_id)
@@ -160,9 +160,9 @@ class TextDataManager:
             )
 
             updated_processed_url = await crud.processed_urls.update(
+                db_session=self.db,
                 obj_current=current_processed_url,
                 obj_new=updated_processed_url,
-                db_session=self.db,
             )
 
             # Обновление вектора в Elastic Search
@@ -190,7 +190,7 @@ class TextDataManager:
             }
             updated_text_data = merge_schemas(updated_text_data, obj_in, values)
             obj_updated_text_data = await crud.text_data.update(
-                obj_current=cur_text_data, obj_new=updated_text_data, db_session=self.db
+                db_session=self.db, obj_current=cur_text_data, obj_new=updated_text_data
             )
 
             return ITextDataReadFull(
@@ -219,12 +219,14 @@ class TextDataManager:
     async def _get_or_create_source(
         self, name: str, url: str, db_session: AsyncSession | None = None
     ) -> Source:
-        source = await crud.source.get_by_name(name=name, db_session=db_session)
+        source = await crud.source.get_by_name(db_session=self.db, name=name)
         if not source:
             # Если нет источника, создаем его
             source = await crud.source.create(
-                obj_in=ISourceCreate(name=name, url=url, db_session=db_session)
+                db_session=db_session,
+                obj_in=ISourceCreate(name=name, url=url)
             )
+            print(f'Created source')
         return source
 
     async def _execute_in_transaction(self, operation, *args, **kwargs):

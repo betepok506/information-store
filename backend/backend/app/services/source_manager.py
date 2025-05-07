@@ -27,12 +27,12 @@ class SourceManager:
 
     async def get_sources_list(self, params) -> Page[ISourceRead]:
         sources = await crud.source.get_multi_paginated(
-            params=params, db_session=self.db
+            db_session=self.db, params=params
         )
         return sources
 
     async def get_source_id(self, source_id: UUID) -> ISourceRead | None:
-        source = await crud.source.get(id=source_id, db_session=self.db)
+        source = await crud.source.get(db_session=self.db, id=source_id)
         if not source:
             raise IdNotFoundException(Source, id=source_id)
         return source
@@ -41,13 +41,13 @@ class SourceManager:
         """Функция реализует функционал создания объекта в базе данных"""
 
         async def _create_operation():
-            source_current = await crud.source.get_source_by_name(
-                name=obj_in.name, db_session=self.db
+            source_current = await crud.source.get_by_name(
+                db_session=self.db, name=obj_in.name
             )
             if source_current:
                 raise SourceExistException(Source, name=source_current.name)
 
-            source = await crud.source.create(obj_in=obj_in, db_session=self.db)
+            source = await crud.source.create(db_session=self.db, obj_in=obj_in)
             return source
 
         return await self._execute_in_transaction(_create_operation)
@@ -58,7 +58,7 @@ class SourceManager:
         """Функция реализует функционал обновления объекта в базе данных"""
 
         async def _update_operation():
-            current_source = await crud.source.get(id=source_id, db_session=self.db)
+            current_source = await crud.source.get(db_session=self.db, id=source_id)
             if not current_source:
                 raise IdNotFoundException(Source, id=source_id)
 
@@ -69,14 +69,15 @@ class SourceManager:
                 raise ContentNoChangeException(detail="The content has not changed")
 
             # TODO: Проверить условия обновления элемента
-            exist_source = await crud.source.get_source_by_name(
-                name=new_source.name, db_session=self.db
+            exist_source = await crud.source.get_by_name(
+                db_session=self.db,
+                name=new_source.name
             )
             if exist_source:
                 raise SourceExistException(Source, name=exist_source.name)
 
             source_updated = await crud.source.update(
-                obj_current=current_source, obj_new=new_source, db_session=self.db
+                db_session=self.db, obj_current=current_source, obj_new=new_source
             )
             return source_updated
 
@@ -86,17 +87,17 @@ class SourceManager:
         """Функция реализует функционал удаления объекта с базы данных"""
 
         async def _remove_operation():
-            current_source = await crud.source.get(id=source_id, db_session=self.db)
+            current_source = await crud.source.get(db_session=self.db, id=source_id)
             if not current_source:
                 raise IdNotFoundException(Source, id=source_id)
 
-            source = await crud.source.remove(id=source_id, db_session=self.db)
+            source = await crud.source.remove(db_session=self.db, id=source_id)
             return source
 
         return await self._execute_in_transaction(_remove_operation)
 
     async def check_source_by_name(self, name: str) -> ISourceRead:
-        source = await crud.source.get_by_name(name=name, db_session=self.db)
+        source = await crud.source.get_by_name(db_session=self.db, name=name)
         if not source:
             raise SourceNotFoundException(Source, source=name)
 

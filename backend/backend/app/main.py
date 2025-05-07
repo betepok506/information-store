@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
     yield
     # shutdown
     await rabbitmq_client.close()
-    es.close()
+    await es.close()
     g.cleanup()
     gc.collect()
 
@@ -79,6 +79,7 @@ app = FastAPI(
     version=settings.API_VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
+    debug=True
 )
 
 
@@ -169,7 +170,7 @@ async def root():
 app.include_router(api_router_v1, prefix=settings.API_V1_STR)
 
 
-if __name__ == "__main__":
-    import uvicorn
+# if __name__ == "__main__":
+#     import uvicorn
 
-    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
+#     uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)

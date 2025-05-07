@@ -13,18 +13,16 @@ class CRUDProcessedUrls(
     CRUDBase[ProcessedUrls, IProcessedUrlsCreate, IProcessedUrlsUpdate]
 ):
     async def get_by_hash(
-        self, *, hash: str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, hash: str
     ) -> ProcessedUrls | None:
-        db_session = db_session or super().get_db().session
         processed_url = await db_session.exec(
             select(ProcessedUrls).where(ProcessedUrls.hash == hash)
         )
         return processed_url.scalar_one_or_none()
 
     async def get_by_url(
-        self, *, url: str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, url: str
     ) -> IPorcessedUrlsReadFull | None:
-        db_session = db_session or super().get_db().session
         processed_url = await db_session.execute(
             select(ProcessedUrls, Source)
             .join(Source, ProcessedUrls.source_id == Source.id, isouter=True)

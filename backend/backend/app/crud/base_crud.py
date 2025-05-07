@@ -31,7 +31,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
 
     async def get(
-        self, *, id: UUID | str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, id: UUID | str
     ) -> ModelType | None:
         query = select(self.model).where(self.model.id == id)
         response = await db_session.execute(query)
@@ -40,8 +40,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_by_ids(
         self,
         *,
+        db_session: AsyncSession,
         list_ids: list[UUID | str],
-        db_session: AsyncSession | None = None,
     ) -> list[ModelType] | None:
         response = await db_session.execute(
             select(self.model).where(self.model.id.in_(list_ids))
@@ -49,7 +49,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return response.scalars().all()
 
     async def get_count(
-        self, db_session: AsyncSession | None = None
+        self, db_session: AsyncSession
     ) -> ModelType | None:
         response = await db_session.execute(
             select(func.count()).select_from(select(self.model).subquery())
@@ -59,10 +59,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_multi(
         self,
         *,
+        db_session: AsyncSession,
         skip: int = 0,
         limit: int = 100,
         query: T | Select[T] | None = None,
-        db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
         if query is None:
             query = select(self.model).offset(skip).limit(limit).order_by(self.model.id)
@@ -72,9 +72,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_multi_paginated(
         self,
         *,
+        db_session: AsyncSession,
         params: Params | None = Params(),
         query: T | Select[T] | None = None,
-        db_session: AsyncSession | None = None,
     ) -> Page[ModelType]:
         if query is None:
             query = select(self.model)
@@ -85,11 +85,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_multi_paginated_ordered(
         self,
         *,
+        db_session: AsyncSession,
         params: Params | None = Params(),
         order_by: str | None = None,
         order: IOrderEnum | None = IOrderEnum.ascendent,
         query: T | Select[T] | None = None,
-        db_session: AsyncSession | None = None,
     ) -> Page[ModelType]:
         columns = self.model.__table__.columns
 
@@ -107,11 +107,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def get_multi_ordered(
         self,
         *,
+        db_session: AsyncSession,
         skip: int = 0,
         limit: int = 100,
         order_by: str | None = None,
         order: IOrderEnum | None = IOrderEnum.ascendent,
-        db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
         # db_session = db_session or self.db.session
 
@@ -141,9 +141,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def create(
         self,
         *,
+        db_session: AsyncSession,
         obj_in: CreateSchemaType | ModelType,
         created_by_id: UUID | str | None = None,
-        db_session: AsyncSession | None = None,
     ) -> ModelType:
         db_obj = self.model.model_validate(obj_in)  # type: ignore
 
@@ -157,9 +157,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def create_many(
         self,
         *,
+        db_session: AsyncSession,
         obj_in: list[CreateSchemaType | ModelType],
         created_by_id: UUID | str | None = None,
-        db_session: AsyncSession | None = None,
     ) -> list[ModelType]:
         data = [self.model.model_validate(obj).dict() for obj in obj_in]  # type: ignore
 
@@ -174,9 +174,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def update(
         self,
         *,
+        db_session: AsyncSession,
         obj_current: ModelType,
         obj_new: UpdateSchemaType | dict[str, Any] | ModelType,
-        db_session: AsyncSession | None = None,
     ) -> ModelType:
 
         if isinstance(obj_new, dict):
@@ -194,7 +194,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return obj_current
 
     async def remove(
-        self, *, id: UUID | str, db_session: AsyncSession | None = None
+        self, *,  db_session: AsyncSession, id: UUID | str
     ) -> ModelType:
         response = await db_session.execute(
             select(self.model).where(self.model.id == id)

@@ -23,7 +23,7 @@ class ProcessedUrlsManager:
     async def get_processed_urls(self, params) -> Page[IProcessedUrlsResponse]:
         '''Функция для постраничного запроса обработанных url'''
         processed_urls = await crud.processed_urls.get_multi_paginated(
-            params=params, db_session=self.db
+            db_session=self.db, params=params
         )
         new_items = []
         for cur_url in processed_urls.items:
@@ -40,7 +40,7 @@ class ProcessedUrlsManager:
     async def get_processed_url_by_url(self, url: str) -> IPorcessedUrlsReadFull:
         '''Функция для получения url по его имени'''
         processed_url_obj = await crud.processed_urls.get_by_url(
-            url=url, db_session=self.db
+            db_session=self.db, url=url
         )
         if not processed_url_obj:
             raise ProcessedUrlNotFoundException(ProcessedUrls, url=url)

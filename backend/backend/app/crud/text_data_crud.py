@@ -16,7 +16,7 @@ from sqlmodel.sql.expression import Select
 
 class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
     async def get(
-        self, *, id: UUID | str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, id: UUID | str
     ) -> ITextDataReadBasic | None:
         """Возвращает объект необходимый для пользователя"""
         query = (
@@ -36,7 +36,7 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         return structured_results[0]  # Проверить если объект не найден
 
     async def get_db_object(
-        self, *, id: UUID | str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, id: UUID | str
     ) -> ModelType | None:
         """Метод возвращает объект базы данных"""
         query = select(self.model).where(self.model.id == id)
@@ -46,9 +46,9 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
     async def get_multi_paginated(
         self,
         *,
+        db_session: AsyncSession,
         params: Params | None = Params(),
-        query: T | Select[T] | None = None,
-        db_session: AsyncSession | None = None,
+        query: T | Select[T] | None = None
     ) -> Page[ITextDataReadBasic]:
         if query is None:
             query = select(self.model)
@@ -65,9 +65,9 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
     async def get_by_elastic_ids_paginated(
         self,
         *,
+        db_session: AsyncSession,
         params: Params | None = Params(),
-        query: T | Select[T] | None = None,
-        db_session: AsyncSession | None = None,
+        query: T | Select[T] | None = None
     ) -> Page[ITextDataReadBasic]:
         if query is None:
             query = select(self.model)
@@ -83,7 +83,7 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         )
 
     async def get_group_by_name(
-        self, *, name: str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, name: str
     ) -> TextData:
         group = await db_session.execute(select(TextData).where(TextData.name == name))
         return group.scalar_one_or_none()
@@ -103,7 +103,7 @@ class CRUDTextData(CRUDBase[TextData, ITextDataCreate, ITextDataUpdate]):
         return structured_results
 
     async def remove(
-        self, *, id: UUID | str, db_session: AsyncSession | None = None
+        self, *, db_session: AsyncSession, id: UUID | str
     ) -> ITextDataReadBasic:
         query = (
             select(TextData, ProcessedUrls, Source)

@@ -59,13 +59,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 15
-  # redis_server:
-  #   image: redis:alpine
-  #   container_name: redis_server_${PROJECT_NAME}
-  #   restart: always
-  #   expose:
-  #     - 6379
-  #   env_file: .env
 
 volumes:
   db_docker:
