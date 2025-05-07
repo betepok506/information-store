@@ -19,8 +19,6 @@ class Settings(BaseSettings):
     API_VERSION: str = "v1"
     API_V1_STR: str = f"/api/{API_VERSION}"
     PROJECT_NAME: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 1  # 1 hour
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 100  # 100 days
 
     RABBITMQ_URL: str = "amqp://admin:secret@130.100.7.137:5672/"
     
@@ -29,9 +27,6 @@ class Settings(BaseSettings):
     POSTGRESQL_HOST: str
     POSTGRESQL_PORT: int
     POSTGRESQL_DATABASE: str
-
-    REDIS_HOST: str
-    REDIS_PORT: str
 
     DB_POOL_SIZE: int = 83
     WEB_CONCURRENCY: int = 9

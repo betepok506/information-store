@@ -19,30 +19,10 @@ http_500_counter = Counter("http_500_errors_total", "Total number of 500 errors"
 http_200_counter = Counter("http_200_errors_total", "Total number of 200 response")
 
 
-async def get_redis_client() -> Redis:
-    redis = await aioredis.from_url(
-        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}",
-        max_connections=10,
-        encoding="utf8",
-        decode_responses=True,
-    )
-    return redis
-
 @asynccontextmanager
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
-
-# @asynccontextmanager
-# async def get_db() -> AsyncGenerator[AsyncSession, None]:
-#     async with SessionLocal() as session:
-#         async with session.begin():  # Автоматическое начало транзакции
-#             try:
-#                 yield session
-#                 await session.commit()  # Автокоммит при успешном выполнении
-#             except Exception:
-#                 await session.rollback()  # Откат при ошибке
-#                 raise
 
 
 class ElasticsearchClient:

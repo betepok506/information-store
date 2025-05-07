@@ -3,22 +3,13 @@ import gc
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import (
     FastAPI,
     HTTPException,
-    Request,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
+    Request
 )
-from fastapi_async_sqlalchemy import SQLAlchemyMiddleware, db
-# from fastapi_cache import FastAPICache
-# from fastapi_cache.backends.redis import RedisBackend
-# from fastapi_limiter import FastAPILimiter
-
-from jwt import DecodeError, ExpiredSignatureError, MissingRequiredClaimError
+from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
 from prometheus_client import generate_latest
 from backend.app.db.init_elastic_db import create_indexes
 
@@ -26,7 +17,6 @@ from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import PlainTextResponse
 from backend.app.api.deps import (
-    get_redis_client,
     http_200_counter,
     http_404_counter,
     http_500_counter,
@@ -36,89 +26,37 @@ from backend.app.api.deps import (
 )
 from backend.app.api.v1.api import api_router as api_router_v1
 from backend.app.core.config import ModeEnum, settings
-from backend.app.core.security import decode_token
 from backend.app.utils.fastapi_globals import GlobalsMiddleware, g
-from backend.app.utils.uuid6 import uuid7
 from backend.app.core.rabbitmq import RabbitMQClient
 from backend.app.services.message_processing import TextDataMessageProcessor
 from backend.app.consumers.handlers.message_handlers import handle_message_event
 
-#todo: Отделить полностью слой сервисной логики от API
-#TODO: Вывести в конфиг названия очередей
+
+# TODO: Вывести в конфиг названия очередей
 os.environ["HTTP_PROXY"] = "http://130.100.7.222:1082"
 os.environ["HTTPS_PROXY"] = "http://130.100.7.222:1082"
 
 rabbitmq_client = RabbitMQClient()
 
 
-async def user_id_identifier(request: Request):
-    if request.scope["type"] == "http":
-        # Retrieve the Authorization header from the request
-        auth_header = request.headers.get("Authorization")
-
-        if auth_header is not None:
-            # Check that the header is in the correct format
-            header_parts = auth_header.split()
-            if len(header_parts) == 2 and header_parts[0].lower() == "bearer":
-                token = header_parts[1]
-                try:
-                    payload = decode_token(token)
-                except ExpiredSignatureError:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Your token has expired. Please log in again.",
-                    )
-                except DecodeError:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Error when decoding the token. Please check your request.",
-                    )
-                except MissingRequiredClaimError:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="There is no required field in your token. Please contact the administrator.",
-                    )
-
-                user_id = payload["sub"]
-
-                return user_id
-
-    if request.scope["type"] == "websocket":
-        return request.scope["path"]
-
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0]
-
-    client = request.client
-    ip = getattr(client, "host", "0.0.0.0")
-    return ip + ":" + request.scope["path"]
-
-
 async def setup_rabbitmq():
     # Инициализация обработчиков
     processor = TextDataMessageProcessor()
     rabbitmq_client.register_handler(
-        "messages",
-        lambda msg: handle_message_event(msg, processor)
+        "messages", lambda msg: handle_message_event(msg, processor)
     )
-    
+
     await rabbitmq_client.connect()
     asyncio.create_task(rabbitmq_client.start_consumers())
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    # redis_client = await get_redis_client()
-    # FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
-    # await FastAPILimiter.init(redis_client, identifier=user_id_identifier)
     await setup_rabbitmq()
     await create_indexes()
     yield
     # shutdown
-    # await FastAPICache.clear()
-    # await FastAPILimiter.close()
-    # models.clear()
     await rabbitmq_client.close()
     g.cleanup()
     gc.collect()
