@@ -1,11 +1,11 @@
 import pytest
 from httpx import AsyncClient
 from typing import AsyncGenerator
-from backend.app.main import app
+from app.main import app
 
 client = AsyncClient(app=app)
 
-url = "http://fastapi.localhost"
+url = "http://fastapi_server:8000"
 
 
 @pytest.fixture(scope="function")

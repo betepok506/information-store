@@ -1,7 +1,7 @@
 .ONESHELL:
 ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('.venv/bin/')")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
-SERVICE_NAME="backend"
+SERVICE_NAME="app"
 
 .PHONY: help
 help:             ## Show the help.
@@ -107,8 +107,7 @@ release:          ## Create a new tag for release.
 docs:
 	@echo "building documentation ..."
 	@rm -rf docs/build
-	@find docs/source/ -type f -name '*.rst' ! -name 'index.rst' -delete
-	@$(ENV_PREFIX)sphinx-apidoc -f -o docs/source $(SERVICE_NAME)/
+	
 	@$(ENV_PREFIX)sphinx-build -b html docs/source  docs/build/html
 
 .PHONY: switch-to-poetry

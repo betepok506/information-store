@@ -1,8 +1,8 @@
 # import pytest
 # from httpx import AsyncClient
-# from backend.app.main import app
+# from app.main import app
 # from typing import AsyncGenerator
-# from backend.app.core.config import settings
+# from app.core.config import settings
 
 # url = "http://fastapi.localhost/api/v1"
 # vector = [1]*settings.ELASTIC_VECTOR_DIMS

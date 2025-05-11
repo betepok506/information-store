@@ -6,12 +6,12 @@ authors = ["jonra1993 <jon_ra@hotmail.es>"]
 package-mode = false
 
 [tool.black]
-line-length = 88
+line-length = 79
 target-version = [ "py310", "py311" ]
 exclude = "((.eggs | .git | .pytest_cache | build | dist))"
 
 [tool.ruff]
-line-length = 88
+line-length = 79
 exclude = [".git", "__pycache__", ".mypy_cache", ".pytest_cache"]
 select = [
     "E",  # pycodestyle errors
@@ -81,6 +81,9 @@ mypy = "^1.14.1"
 gitchangelog = "^3.0.4"
 mkdocs = ">=1.6.1"
 mkdocs-material = "*"
+sphinx-rtd-theme = "^3.0.2"
+Sphinx = "^8.2.3"
+numpydoc = "^1.8.0"
 
 [tool.poetry.group.test.dependencies]
 black = "^24.10.0"
