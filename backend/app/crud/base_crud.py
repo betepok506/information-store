@@ -163,8 +163,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         obj_in: list[CreateSchemaType | ModelType],
         created_by_id: UUID | str | None = None,
     ) -> list[ModelType]:
-        data = [self.model.model_validate(obj).dict() \
-            for obj in obj_in]  # type: ignore
+        data = [self.model.model_validate(obj).dict() for obj in obj_in]
 
         if created_by_id:
             for item in data:

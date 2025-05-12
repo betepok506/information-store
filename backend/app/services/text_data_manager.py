@@ -211,7 +211,7 @@ class TextDataManager:
                 raise IdNotFoundException(Source, id=text_data_id)
 
             hashed_str = None
-            if not obj_in.text is None:
+            if obj_in.text is not None:
                 hashed_str = get_hash(obj_in.text)
 
             processed_urls_params = {

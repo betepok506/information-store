@@ -21,7 +21,7 @@ class ProcessedUrlsManager:
     """
     Менеджер для работы с обработанными URL.
 
-    Обеспечивает взаимодействие с таблицей Processed_urls и связанными 
+    Обеспечивает взаимодействие с таблицей Processed_urls и связанными
     сервисами.
 
     Attributes
@@ -31,15 +31,6 @@ class ProcessedUrlsManager:
     es : AsyncElasticsearch | None
         Клиент Elasticsearch (необязательный)
     """
-
-    #     Methods
-    # -------
-    # get_processed_urls(params)
-    #     Получает пагинированный список обработанных URL.
-    # get_processed_url_by_url(url)
-    #     Получает полную информацию об URL по его значению.
-    # _execute_in_transaction(operation, *args, **kwargs)
-    #     Выполняет операцию в транзакции.
 
     def __init__(self, db: AsyncSession, es: AsyncElasticsearch | None = None):
         """
@@ -78,7 +69,7 @@ class ProcessedUrlsManager:
         new_items = []
         for cur_url in processed_urls.items:
             source_name = (
-                cur_url.source.name if not cur_url.source is None else None
+                cur_url.source.name if cur_url.source is not None else None
             )
 
             new_items.append(

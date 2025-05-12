@@ -14,7 +14,7 @@ class ProcessedUrlsBase(BaseUUIDModel):
 
 
 class ProcessedUrls(ProcessedUrlsBase, table=True):
-    __tablename__ = "processed_urls"
+    # __tablename__ = "processed_urls"
 
     source_id: UUID | None = Field(default=None, foreign_key="Source.id")
     source: Optional["Source"] | None = Relationship(  # noqa: F821
