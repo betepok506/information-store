@@ -1,8 +1,8 @@
 # import pytest
 # from httpx import AsyncClient
 # from typing import AsyncGenerator
-# from backend.app.main import app
-# from backend.app.core.config import settings
+# from app.main import app
+# from app.core.config import settings
 
 # url = "http://fastapi.localhost/api/v1"
 
