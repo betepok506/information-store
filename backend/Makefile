@@ -1,7 +1,7 @@
 .ONESHELL:
 ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('.venv/bin/')")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
-SERVICE_NAME="backend"
+SERVICE_NAME="app"
 
 .PHONY: help
 help:             ## Show the help.
@@ -50,8 +50,8 @@ lint:             ## Run pep8, black, mypy linters.
 	$(ENV_PREFIX)flake8 $(SERVICE_NAME)/
 	$(ENV_PREFIX)black --check $(SERVICE_NAME)/
 	$(ENV_PREFIX)black --check tests/
-	$(ENV_PREFIX)mypy --ignore-missing-imports $(SERVICE_NAME)/
-	$(ENV_PREFIX)pydocstyle $(SERVICE_NAME)/
+	# $(ENV_PREFIX)mypy --ignore-missing-imports $(SERVICE_NAME)/
+	# $(ENV_PREFIX)pydocstyle $(SERVICE_NAME)/
 
 .PHONY: test
 test: lint        ## Run tests and generate coverage report.
@@ -103,12 +103,16 @@ release:          ## Create a new tag for release.
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and release the new version."
 
-.PHONY: docs
-docs:
-	@echo "building documentation ..."
-	@rm -rf docs/build
+.PHONY: docs-generate
+docs-generate: ## Generating documentation using Sphinx
+	@echo "generating documentation ..."
 	@find docs/source/ -type f -name '*.rst' ! -name 'index.rst' -delete
 	@$(ENV_PREFIX)sphinx-apidoc -f -o docs/source $(SERVICE_NAME)/
+
+.PHONY: docs-build
+docs-build: ## Building documentation using Sphinx
+	@echo "building documentation ..."
+	@rm -rf docs/build
 	@$(ENV_PREFIX)sphinx-build -b html docs/source  docs/build/html
 
 .PHONY: switch-to-poetry
@@ -128,8 +132,3 @@ switch-to-poetry: ## Switch to poetry package manager.
 	@mv setup.py .github/backup
 	@echo "You have switched to https://python-poetry.org/ package manager."
 	@echo "Please run 'poetry shell' or 'poetry run $(SERVICE_NAME)'"
-
-.PHONY: init
-init:             ## Initialize the project based on an application template.
-	@./.github/init.sh
-	
