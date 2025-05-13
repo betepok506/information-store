@@ -1,10 +1,13 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy.orm import relationship as sa_relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 from .base_uuid_model import BaseUUIDModel
 
+if TYPE_CHECKING:
+    from app.models import ProcessedUrls
+    
 __all__ = ["SourceBase", "Source"]
 
 

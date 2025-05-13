@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 
 from sqlmodel import Field, Relationship
 
 from .base_uuid_model import BaseUUIDModel
+
+if TYPE_CHECKING:
+    from app.models import Source, TextData
 
 __all__ = ["ProcessedUrlsBase", "ProcessedUrls"]
 
