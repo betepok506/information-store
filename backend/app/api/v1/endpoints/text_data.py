@@ -23,7 +23,9 @@ from app.schemas import (
     create_response,
 )
 from app.services import TextDataManager
-from app.utils.exceptions import IdNotFoundException
+from app.utils.exceptions import IdNotFoundException, APIException
+from app.schemas import ErrorCode
+from fastapi import  status
 
 router = APIRouter()
 
@@ -40,9 +42,8 @@ async def get_text_data(
         try:
             result = await service.get_text_data(params=params)
         except Exception as e:
-            return Response(
-                f"Internal server error. Error: {e}", status_code=500
-            )
+            return create_response(data=None, 
+                                   message=f"Internal server error. Error: {e}")
     return create_response(data=result)
 
 
@@ -101,17 +102,39 @@ async def create_text_data(
     es: AsyncElasticsearch = Depends(get_elasticsearch_client),
 ) -> IPostResponseBase[ITextDataReadBasic]:
     """ """
+    print(f"db_session 11 : {type(db)}")
     async with db as session:
+        print(f"db_session 2 : {type(session)}")
         service = TextDataManager(db=session, es=es)
         try:
             result = await service.create_text_data(
                 obj_in, settings.ELASTIC_VECTOR_INDEX
             )
         except Exception as e:
-            return Response(
-                f"Internal server error. Error: {e}", status_code=500
+            raise APIException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                error_code=ErrorCode.INTERNAL_ERROR,
+                message="Internal server error",
+                details=[{"field": "exception", "message": str(e)}]
             )
+            
         return create_response(data=result)
+    
+    # async with db as session:
+    #     service = TextDataManager(db=session, es=es)
+    #     try:
+    #         result = await service.create_text_data(
+    #             obj_in, settings.ELASTIC_VECTOR_INDEX
+    #         )
+    #     except Exception as e:
+    #         raise APIException(
+    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #             error_code=ErrorCode.INTERNAL_ERROR,
+    #             message="Internal server error",
+    #             details=[{"field": "exception", "message": str(e)}]
+    #         )
+            
+    #     return create_response(data=result)
 
 
 @router.put("/{text_data_id}")

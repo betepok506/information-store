@@ -134,7 +134,7 @@ class TextDataManager:
             new_processed_url = await crud.processed_urls.create(
                 db_session=self.db, obj_in=processed_url
             )
-            print(7)
+
             # Elasticsearch
             elastic_id = await self._create_elastic_record(
                 index, obj_in.text, obj_in.vector

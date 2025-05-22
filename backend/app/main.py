@@ -64,6 +64,7 @@ from app.core.rabbitmq import RabbitMQClient
 from app.db.init_elastic_db import create_indexes
 from app.services import TextDataMessageProcessor
 from app.utils.fastapi_globals import GlobalsMiddleware, g
+from app.utils.exceptions import add_exception_handlers
 
 # TODO: Вывести в конфиг названия очередей
 os.environ["HTTP_PROXY"] = "http://130.100.7.222:1082"
@@ -130,6 +131,9 @@ app.add_middleware(
 )
 app.add_middleware(GlobalsMiddleware)
 
+# Set custom exception
+add_exception_handlers(app)
+
 # Set all CORS origins enabled
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
@@ -143,20 +147,20 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 
-class CustomException(Exception):
-    http_code: int
-    code: str
-    message: str
+# class CustomException(Exception):
+#     http_code: int
+#     code: str
+#     message: str
 
-    def __init__(
-        self,
-        http_code: int = 500,
-        code: str | None = None,
-        message: str = "This is an error message",
-    ):
-        self.http_code = http_code
-        self.code = code if code else str(self.http_code)
-        self.message = message
+#     def __init__(
+#         self,
+#         http_code: int = 500,
+#         code: str | None = None,
+#         message: str = "This is an error message",
+#     ):
+#         self.http_code = http_code
+#         self.code = code if code else str(self.http_code)
+#         self.message = message
 
 
 @app.middleware("http")

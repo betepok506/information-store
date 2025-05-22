@@ -50,8 +50,7 @@ lint:             ## Run pep8, black, mypy linters.
 	$(ENV_PREFIX)flake8 $(SERVICE_NAME)/
 	$(ENV_PREFIX)black --check $(SERVICE_NAME)/
 	$(ENV_PREFIX)black --check tests/
-	# $(ENV_PREFIX)mypy --ignore-missing-imports $(SERVICE_NAME)/
-	# $(ENV_PREFIX)pydocstyle $(SERVICE_NAME)/
+
 
 .PHONY: test
 test: lint        ## Run tests and generate coverage report.

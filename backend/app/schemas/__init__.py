@@ -32,6 +32,7 @@ from .text_vector_schema import (
     ITextVectorBaseRead,
     ITextVectorSearchRead,
 )
+from .error_schema import ErrorDetail, ErrorCode, IErrorResponseBase
 
 __all__ = [
     "IPorcessedUrlsReadFull",
@@ -62,4 +63,7 @@ __all__ = [
     "ITextVectorBaseRead",
     "ITextVectorSearchRead",
     "IOrderEnum",
+    "ErrorDetail",
+    "ErrorCode",
+    "IErrorResponseBase",
 ]
