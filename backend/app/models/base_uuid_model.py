@@ -11,6 +11,7 @@ from app.utils.uuid6 import uuid7
 
 __all__ = ["BaseUUIDModel"]
 
+
 # # id: implements proposal uuid7 draft4
 class MySQLModel(_SQLModel, table=False):
     @declared_attr  # type: ignore

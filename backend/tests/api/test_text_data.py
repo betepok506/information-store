@@ -1,118 +1,90 @@
+# tests/test_text_data.py
+
+import uuid
 import pytest
-from httpx import AsyncClient
-from typing import AsyncGenerator
-from app.main import app
+from http import HTTPStatus
+from fastapi.testclient import TestClient
+
 from app.core.config import settings
+from app.schemas import ITextDataCreateRequest, ITextDataUpdateRequest
 
-url = "http://fastapi.localhost/api/v1"
-vector = [1] * settings.ELASTIC_VECTOR_DIMS
-
-
-@pytest.fixture(scope="function")
-async def test_client() -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url=url) as client:
-        yield client
+TEXT_DATA_ENDPOINT = "/api/v1/text"
 
 
-@pytest.mark.asyncio
-class TestPostSource:
-    @pytest.mark.parametrize(
-        "method, endpoint, data, expected_status, expected_response",
-        [
-            (
-                "post",
-                "/source",
-                {"name": "TestURL1", "url": "http://localhost/"},
-                201,
-                {"detail": "Data created correctly"},
-            ),
-            # (
-            #     "post",
-            #     "/login",
-            #     {
-            #         "email": settings.FIRST_SUPERUSER_EMAIL,
-            #         "password": settings.FIRST_SUPERUSER_PASSWORD,
-            #     },
-            #     200,
-            #     None,
-            # ),  # Add expected JSON response for successful login
-            # (
-            #     "post",
-            #     "/login/new_access_token",
-            #     {"refresh_token": ""},
-            #     403,
-            #     {"detail": "Error when decoding the token. Please check your request."},
-            # ),
-        ],
+def test_create_text_data(client: TestClient, elastic_index):
+    payload = {
+        "text": "string",
+        "url": "string",
+        "source_name": "string",
+        "vector": [1.0] * settings.ELASTIC_VECTOR_DIMS,
+    }
+    response = client.post(TEXT_DATA_ENDPOINT, json=payload)
+    print("Response status code:", response.status_code)
+    print("Response body:", response.json())
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()["data"]
+    assert data["name"] == payload["name"]
+    assert "id" in data
+
+
+def test_get_all_text_data(client: TestClient):
+    response = client.get(TEXT_DATA_ENDPOINT)
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert isinstance(data["items"], list)
+
+
+def test_get_by_id(client: TestClient):
+    # First create one
+    payload = {
+        "url": "localhost:8090/v1",
+        "text": "This is a test text.",
+        "source_name": "elastic_123",
+        "vector": [1] * settings.ELASTIC_VECTOR_DIMS,
+    }
+
+    create_response = client.post(TEXT_DATA_ENDPOINT, json=payload)
+    created_id = create_response.json()["data"]["id"]
+
+    # Now get by ID
+    get_response = client.get(f"{TEXT_DATA_ENDPOINT}/{created_id}")
+    assert get_response.status_code == HTTPStatus.OK
+    assert get_response.json()["data"]["id"] == created_id
+
+
+def test_update_text_data(client: TestClient):
+    payload = {
+        "url": "localhost:8090/v1",
+        "text": "This is a test text.",
+        "source_name": "elastic_123",
+        "vector": [1] * settings.ELASTIC_VECTOR_DIMS,
+    }
+
+    create_response = client.post(TEXT_DATA_ENDPOINT, json=payload)
+    created_id = create_response.json()["data"]["id"]
+
+    update_payload = ITextDataUpdateRequest(name="Updated Name").dict()
+
+    put_response = client.put(
+        f"{TEXT_DATA_ENDPOINT}/{created_id}", json=update_payload
     )
-    async def test(
-        self, test_client, method, endpoint, data, expected_status, expected_response
-    ):
-        async for client in test_client:
-            if method == "get":
-                response = await client.get(endpoint)
-            elif method == "put":
-                response = await client.put(endpoint, json=data)
-            elif method == "delete":
-                response = await client.delete(endpoint)
-            else:  # Default to POST
-                response = await client.post(endpoint, json=data)
-
-            assert response.status_code == expected_status
-            if expected_response is not None:
-                print(response.json())
-                assert response.json() == expected_response
+    assert put_response.status_code == HTTPStatus.OK
+    assert put_response.json()["data"]["name"] == "Updated Name"
 
 
-@pytest.mark.asyncio
-class TestPostTextData:
-    @pytest.mark.parametrize(
-        "method, endpoint, data, expected_status, expected_response",
-        [
-            (
-                "post",
-                "/text_data",
-                {
-                    "text": "string",
-                    "url": "string",
-                    "source_name": "string",
-                    "vector": vector,
-                },
-                400,
-                {"detail": "Email or Password incorrect"},
-            ),
-            (
-                "post",
-                "/login",
-                {
-                    "email": settings.FIRST_SUPERUSER_EMAIL,
-                    "password": settings.FIRST_SUPERUSER_PASSWORD,
-                },
-                200,
-                None,
-            ),  # Add expected JSON response for successful login
-            (
-                "post",
-                "/login/new_access_token",
-                {"refresh_token": ""},
-                403,
-                {"detail": "Error when decoding the token. Please check your request."},
-            ),
-        ],
-    )
-    async def test(
-        self, test_client, method, endpoint, data, expected_status, expected_response
-    ):
-        async for client in test_client:
-            if method == "get":
-                response = await client.get(endpoint)
-            elif method == "put":
-                response = await client.put(endpoint, json=data)
-            elif method == "delete":
-                response = await client.delete(endpoint)
-            else:  # Default to POST
-                response = await client.post(endpoint, json=data)
+def test_delete_text_data(client: TestClient):
+    payload = {
+        "url": "localhost:8090/v1",
+        "text": "This is a test text.",
+        "source_name": "elastic_123",
+        "vector": [1] * settings.ELASTIC_VECTOR_DIMS,
+    }
 
-            assert response.status_code == expected_status
-            if expected_response is not None:
-                assert response.json() == expected_response
+    create_response = client.post(TEXT_DATA_ENDPOINT, json=payload)
+    created_id = create_response.json()["data"]["id"]
+
+    delete_response = client.delete(f"{TEXT_DATA_ENDPOINT}/{created_id}")
+    assert delete_response.status_code == HTTPStatus.OK
+
+    get_response = client.get(f"{TEXT_DATA_ENDPOINT}/{created_id}")
+    assert get_response.status_code == HTTPStatus.NOT_FOUND

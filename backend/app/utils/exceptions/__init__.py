@@ -12,6 +12,7 @@ from .user_follow_exceptions import (
     UserFollowedException,
     UserNotFollowedException,
 )
+from .base import APIException, api_exception_handler, add_exception_handlers
 
 __all__ = [
     "ContentNoChangeException",
@@ -24,4 +25,7 @@ __all__ = [
     "UserNotFollowedException",
     "UserFollowedException",
     "SelfFollowedException",
+    "APIException",
+    "api_exception_handler",
+    "add_exception_handlers",
 ]

@@ -7,7 +7,7 @@ from .base_uuid_model import BaseUUIDModel
 
 if TYPE_CHECKING:
     from app.models import ProcessedUrls
-    
+
 __all__ = ["SourceBase", "Source"]
 
 
